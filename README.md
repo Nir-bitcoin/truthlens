@@ -249,6 +249,11 @@ REPORT
 
 ---
 
+
+</div>
+
+---
+
 ## 🧰 Tech Stack
 
 <div align="center">
@@ -296,21 +301,27 @@ echo "GROQ_API_KEY=gsk_your_key_here" > .env
 
 # Run app
 streamlit run app.py
-Access
-Open browser: http://localhost:8501
+### Access
 
-🆓 How to use
+Open browser: `http://localhost:8501`
+
+---
+
+## 🆓 How to use
+
 Once the app is running, you only need three steps:
 
-Upload one or more documents (PDF, DOCX, TXT, or images).
+1. Upload one or more documents (PDF, DOCX, TXT, or images).
+2. Ask any question, in any of the 11 supported languages.
+3. Read the answer with its citations, conflicts, and confidence score.
 
-Ask any question, in any of the 11 supported languages.
+---
 
-Read the answer with its citations, conflicts, and confidence score.
+## 🧪 Testing
 
-🧪 Testing
-Run Automated Tests
-bash
+### Run Automated Tests
+
+```bash
 python backend/test_truthlens.py
 Test Results
 #	Test	Status
@@ -388,7 +399,15 @@ Commit your changes (git commit -m 'feat: add amazing feature')
 Push to the branch (git push origin feat/amazing-feature)
 
 Open a Pull Request
+
 📄 License
 MIT License. See LICENSE for details.
 
 <div align="center">
+⭐ Star this repo if you found it useful!
+Built with ❤️
+
+Don't just get answers. Get truth.
+⬆ Back to top
+
+</div> ```
