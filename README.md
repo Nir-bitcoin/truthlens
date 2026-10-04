@@ -58,20 +58,17 @@
 <div align="center">
 
 ### 🔍 TruthLens — The AI Document Investigator
-
-```
 ┌─────────────────────────────────────────────────────────────┐
-│                                                             │
-│   RETRIEVE → COMPARE → DETECT → DECIDE → ANSWER             │
-│                                                             │
-│   Supporting Evidence  +  Contradicting Evidence            │
-│                    ↓                                        │
-│                 EVIDENCE BATTLE                             │
-│                    ↓                                        │
-│         ✅ AGREE  |  ⚠️ CONFLICT  |  🟡 INSUFFICIENT         │
-│                                                             │
+│ │
+│ RETRIEVE → COMPARE → DETECT → DECIDE → ANSWER │
+│ │
+│ Supporting Evidence + Contradicting Evidence │
+│ ↓ │
+│ EVIDENCE COMPARISON │
+│ ↓ │
+│ ✅ AGREE | ⚠️ CONFLICT | 🟡 INSUFFICIENT │
+│ │
 └─────────────────────────────────────────────────────────────┘
-```
 
 </div>
 
@@ -98,7 +95,6 @@ Before returning a conclusion, it:
 | Detects conflicts | ❌ | ✅ **Claim-level** |
 | Says "I don't know" | ❌ | ✅ **Honest** |
 | Counter-evidence | ❌ | ✅ **Active search** |
-| Evidence Battle | ❌ | ✅ **AI vs AI** |
 | Multi-language | ⚠️ Often English-only | ✅ **11 languages** |
 | Evidence confidence | ❌ | ✅ **Evidence-based** |
 | Hallucination firewall | ❌ | ✅ **No evidence = No answer** |
@@ -116,13 +112,15 @@ Before returning a conclusion, it:
 | 1 | **Conflict Detection** | Finds contradictions at claim-level |
 | 2 | **"I Don't Know" Engine** | Refuses to answer without evidence |
 | 3 | **Counter-Evidence 2.0** | Actively tries to disprove the answer |
-| 4 | **Evidence Battle** | AI vs AI investigation |
-| 5 | **Evidence Gap Detector** | Tells what's missing |
-| 6 | **Multi-Bhasha** | 11 languages supported |
-| 7 | **Evidence Confidence** | Score based on the evidence, not a guessed percentage |
-| 8 | **Evidence Chain** | Full proof, traceable |
-| 9 | **Hallucination Firewall** | No evidence = No answer |
-| 10 | **Cross-Lingual Retrieval** | Hindi question + English docs |
+| 4 | **Evidence Gap Detector** | Tells what's missing |
+| 5 | **Multi-Bhasha** | 11 languages supported |
+| 6 | **Evidence Confidence** | Score based on the evidence, not a guessed percentage |
+| 7 | **Evidence Chain** | Full proof, traceable |
+| 8 | **Hallucination Firewall** | No evidence = No answer |
+| 9 | **Cross-Lingual Retrieval** | Hindi question + English docs |
+| 10 | **Temporal Truth Engine** | Distinguishes time-based changes from real conflicts |
+| 11 | **Source Drift Detection** | Detects changes across document versions |
+| 12 | **Claim Dependency Graph** | Visual graph of claims and their evidence |
 
 </div>
 
@@ -132,7 +130,7 @@ Before returning a conclusion, it:
 
 ## 🔥 Features
 
-TruthLens has **39 features** in total: 7 core, 13 advanced, 8 technical, and 11 supported languages.
+TruthLens has **38 features** in total: 7 core, 12 advanced, 8 technical, and 11 supported languages.
 
 ### 🔴 Core Features
 
@@ -157,16 +155,18 @@ TruthLens has **39 features** in total: 7 core, 13 advanced, 8 technical, and 11
 | 8 | Counter-Evidence 2.0 (supporting + contradicting) | `conflict.py` | ✅ |
 | 9 | Evidence Gap Detector | `conflict.py` | ✅ |
 | 10 | Resolution Evidence ("what would resolve this?") | `conflict.py` | ✅ |
-| 11 | Evidence Battle (AI vs AI) | `conflict.py` | ✅ |
-| 12 | Evidence Confidence Score | `conflict.py` | ✅ |
-| 13 | Evidence Chain | `app.py` | ✅ |
-| 14 | Conflict Graph (Plotly) | `graph.py` | ✅ |
-| 15 | Hallucination Firewall | `app.py` | ✅ |
-| 16 | Empty-State Protection | `app.py` | ✅ |
-| 17 | Cross-Lingual Retrieval | `app.py` | ✅ |
-| 18 | Auto-Process | `app.py` | ✅ |
-| 19 | Claim Extraction | `conflict.py` | ✅ |
-| 20 | Answerability Check | `conflict.py` | ✅ |
+| 11 | Evidence Confidence Score | `conflict.py` | ✅ |
+| 12 | Evidence Chain | `app.py` | ✅ |
+| 13 | Conflict Graph (Plotly) | `graph.py` | ✅ |
+| 14 | Hallucination Firewall | `app.py` | ✅ |
+| 15 | Empty-State Protection | `app.py` | ✅ |
+| 16 | Cross-Lingual Retrieval | `app.py` | ✅ |
+| 17 | Auto-Process | `app.py` | ✅ |
+| 18 | Claim Extraction | `conflict.py` | ✅ |
+| 19 | Answerability Check | `conflict.py` | ✅ |
+| 20 | Temporal Truth Engine | `conflict.py` | ✅ |
+| 21 | Source Drift Detection | `conflict.py` | ✅ |
+| 22 | Claim Dependency Graph | `conflict.py` + `graph.py` | ✅ |
 
 ### 🟡 Technical Features
 
@@ -174,14 +174,14 @@ TruthLens has **39 features** in total: 7 core, 13 advanced, 8 technical, and 11
 
 | # | Feature | File | Status |
 |:---:|:---|:---|:---:|
-| 21 | Groq API (fast and free) | `llm.py` | ✅ |
-| 22 | openai/gpt-oss-120b model | `llm.py` | ✅ |
-| 23 | Strong multilingual embedding model | `embeddings.py` | ✅ |
-| 24 | Top-30 retrieval | `app.py` | ✅ |
-| 25 | Query translation | `app.py` | ✅ |
-| 26 | OCR support (scanned PDFs and images) | `parser.py` | ✅ |
-| 27 | Page number preservation | `embeddings.py` | ✅ |
-| 28 | Caching | `translator.py` | ✅ |
+| 23 | Groq API (fast and free) | `llm.py` | ✅ |
+| 24 | openai/gpt-oss-120b model | `llm.py` | ✅ |
+| 25 | Strong multilingual embedding model | `embeddings.py` | ✅ |
+| 26 | Top-30 retrieval | `app.py` | ✅ |
+| 27 | Query translation | `app.py` | ✅ |
+| 28 | OCR support (scanned PDFs and images) | `parser.py` | ✅ |
+| 29 | Page number preservation | `embeddings.py` | ✅ |
+| 30 | Caching | `translator.py` | ✅ |
 
 ### 🌍 Language Support
 
@@ -207,74 +207,43 @@ TruthLens has **39 features** in total: 7 core, 13 advanced, 8 technical, and 11
 ## 🧠 Architecture
 
 <div align="center">
-
-```
-                    USER QUESTION
-                         │
-                         ▼
-                LANGUAGE DETECTION
-                         │
-                         ▼
-                CROSS-LINGUAL SEARCH
-                         │
-                         ▼
-                  EVIDENCE RETRIEVAL
-                         │
-              ┌──────────┴──────────┐
-              ▼                     ▼
-        SUPPORTING              COUNTER
-         EVIDENCE               EVIDENCE
-              │                     │
-              └──────────┬──────────┘
-                         ▼
-                   CLAIM EXTRACTION
-                         │
-                         ▼
-                 CONFLICT DETECTION
-                         │
-              ┌──────────┴──────────┐
-              ▼                     ▼
-        EVIDENCE GAP          EVIDENCE OK
-              │                     │
-              ▼                     ▼
-      WHAT EVIDENCE IS       ANSWER + SOURCES
-           NEEDED?                  │
-              │                     ▼
-              │              CONFIDENCE SCORE
-              │                     │
-              └──────────┬──────────┘
-                         ▼
-                  INVESTIGATION
-                      REPORT
-```
-
-</div>
-
-### 🥊 Evidence Battle
-
-<div align="center">
-
-```
-                  USER QUESTION
-                       ↓
-                Candidate Answer
-                       ↓
-          ┌────────────┴────────────┐
-          ↓                         ↓
-   🔵 SUPPORTER                🔴 SKEPTIC
-   "Why true?"                 "Why false?"
-          ↓                         ↓
-   Supporting evidence       Counter evidence
-          └────────────┬────────────┘
-                       ↓
-                EVIDENCE BATTLE
-                       ↓
-             ┌─────────┼─────────┐
-             ↓         ↓         ↓
-           AGREE     CONFLICT   INSUFFICIENT
-             ↓         ↓         ↓
-           ANSWER   UNCERTAIN   I DON'T KNOW
-```
+USER QUESTION
+│
+▼
+LANGUAGE DETECTION
+│
+▼
+CROSS-LINGUAL SEARCH
+│
+▼
+EVIDENCE RETRIEVAL
+│
+┌──────────┴──────────┐
+▼ ▼
+SUPPORTING COUNTER
+EVIDENCE EVIDENCE
+│ │
+└──────────┬──────────┘
+▼
+CLAIM EXTRACTION
+│
+▼
+CONFLICT DETECTION
+│
+┌──────────┴──────────┐
+▼ ▼
+EVIDENCE GAP EVIDENCE OK
+│ │
+▼ ▼
+WHAT EVIDENCE IS ANSWER + SOURCES
+NEEDED? │
+│ ▼
+│ CONFIDENCE SCORE
+│ │
+└──────────┬──────────┘
+▼
+INVESTIGATION
+REPORT
 
 </div>
 
@@ -327,67 +296,47 @@ echo "GROQ_API_KEY=gsk_your_key_here" > .env
 
 # Run app
 streamlit run app.py
-```
+Access
+Open browser: http://localhost:8501
 
-### Access
-
-Open browser: `http://localhost:8501`
-
----
-
-## 🆓 How to use
-
+🆓 How to use
 Once the app is running, you only need three steps:
 
-1. Upload one or more documents (PDF, DOCX, TXT, or images).
-2. Ask any question, in any of the 11 supported languages.
-3. Read the answer with its citations, conflicts, and confidence score.
+Upload one or more documents (PDF, DOCX, TXT, or images).
 
----
+Ask any question, in any of the 11 supported languages.
 
-## 🧪 Testing
+Read the answer with its citations, conflicts, and confidence score.
 
-### Run Automated Tests
-
-```bash
+🧪 Testing
+Run Automated Tests
+bash
 python backend/test_truthlens.py
-```
+Test Results
+#	Test	Status
+1	Parser	✅ PASSED
+2	Language Detection	✅ PASSED
+3	Language Names	✅ PASSED
+4	No Evidence	✅ PASSED
+5	Strong Evidence	✅ PASSED
+6	Conflict Detection	✅ PASSED
+7	Confidence Calculation	✅ PASSED
+8	Conflict Penalty	✅ PASSED
+All 8 tests passing ✅
 
-### Test Results
-
-| # | Test | Status |
-|:---:|:---|:---:|
-| 1 | Parser | ✅ PASSED |
-| 2 | Language Detection | ✅ PASSED |
-| 3 | Language Names | ✅ PASSED |
-| 4 | No Evidence | ✅ PASSED |
-| 5 | Strong Evidence | ✅ PASSED |
-| 6 | Conflict Detection | ✅ PASSED |
-| 7 | Confidence Calculation | ✅ PASSED |
-| 8 | Conflict Penalty | ✅ PASSED |
-
-**All 8 tests passing ✅**
-
----
-
-## 🎬 Demo
-
+🎬 Demo
 Example outputs (sample documents, numbers are illustrative).
 
-### Scenario 1: Normal Question
-
-```
+Scenario 1: Normal Question
+text
 Question: "What is the refund policy?"
 
 Answer: The refund policy allows returns within 30 days of purchase.
 [policy.pdf, Page 4]
 
 Evidence Confidence: 92%
-```
-
-### Scenario 2: Conflicting Documents
-
-```
+Scenario 2: Conflicting Documents
+text
 Question: "When did employee join?"
 
 ⚠️ CONFLICT DETECTED
@@ -397,97 +346,49 @@ Question: "When did employee join?"
 Answer: Cannot determine reliably.
 
 Evidence Confidence: 31%
-```
-
-### Scenario 3: Evidence Battle
-
-```
-Question: "Was employee eligible for promotion?"
-
-🔵 SUPPORTER                🔴 SKEPTIC
-- Performance: 91%          - Policy requires 5 years
-- Manager recommendation    - No approval found
-
-Verdict: INSUFFICIENT
-Missing: Manager approval record
-```
-
----
-
-## 🆚 Comparison
-
+🆚 Comparison
 <div align="center">
-
-| Feature | Basic RAG chatbot | **TruthLens** |
-|:---|:---:|:---:|
-| Multi-format | ⚠️ Often PDF only | ✅ **PDF, DOCX, TXT, images** |
-| Multi-language | ⚠️ Often English-only | ✅ **11 languages** |
-| Conflict detection | ❌ | ✅ **Claim-level** |
-| "I don't know" | ❌ | ✅ **Honest** |
-| Counter-evidence | ❌ | ✅ **Active** |
-| Evidence Battle | ❌ | ✅ **AI vs AI** |
-| Evidence confidence | ⚠️ Single guessed % | ✅ **Evidence-based** |
-| Evidence chain | ❌ | ✅ **Full proof** |
-| Hallucination firewall | ❌ | ✅ **No evidence = No answer** |
-
+Feature	Basic RAG chatbot	TruthLens
+Multi-format	⚠️ Often PDF only	✅ PDF, DOCX, TXT, images
+Multi-language	⚠️ Often English-only	✅ 11 languages
+Conflict detection	❌	✅ Claim-level
+"I don't know"	❌	✅ Honest
+Counter-evidence	❌	✅ Active
+Evidence confidence	⚠️ Single guessed %	✅ Evidence-based
+Evidence chain	❌	✅ Full proof
+Hallucination firewall	❌	✅ No evidence = No answer
+Temporal analysis	❌	✅ Time-aware
+Source drift	❌	✅ Version detection
+Claim graph	❌	✅ Visual dependency
 </div>
-
----
-
-## 📈 Roadmap
-
-| Version | Feature | Status |
-|:---:|:---|:---:|
-| v1.0 | Core Q&A + Citations | ✅ |
-| v1.1 | Conflict Detection | ✅ |
-| v1.2 | Multi-Bhasha | ✅ |
-| v1.3 | Counter-Evidence 2.0 | ✅ |
-| v1.4 | Evidence Gap + Resolution | ✅ |
-| v1.5 | Evidence Battle | ✅ |
-| v2.0 | Temporal Conflict Detection | 🔜 |
-| v2.1 | Claim Dependency Graph | 🔜 |
-| v2.2 | Source Drift Detection | 🔜 |
-
----
-
-## 👥 Team
-
+📈 Roadmap
+Version	Feature	Status
+v1.0	Core Q&A + Citations	✅
+v1.1	Conflict Detection	✅
+v1.2	Multi-Bhasha	✅
+v1.3	Counter-Evidence 2.0	✅
+v1.4	Evidence Gap + Resolution	✅
+v2.0	Temporal Conflict Detection	✅
+v2.1	Claim Dependency Graph	✅
+v2.2	Source Drift Detection	✅
+👥 Team
 <div align="center">
-
-| Member | Role |
-|:---|:---|
-| [Your name] | Developer |
-
+Member	Role
+Niranjan vishe	Developer
 </div>
-
----
-
-## 🤝 Contributing
-
+🤝 Contributing
 Contributions are welcome!
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feat/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feat/amazing-feature`)
-5. Open a Pull Request
+Fork the repository
 
----
+Create your feature branch (git checkout -b feat/amazing-feature)
 
-## 📄 License
+Commit your changes (git commit -m 'feat: add amazing feature')
 
-MIT License. See [LICENSE](LICENSE) for details.
+Push to the branch (git push origin feat/amazing-feature)
 
----
+Open a Pull Request
+📄 License
+MIT License. See LICENSE for details.
 
 <div align="center">
-
-### ⭐ Star this repo if you found it useful!
-
-**Built with ❤️**
-
-*Don't just get answers. Get truth.*
-
-[⬆ Back to top](#-truthlens)
-
-</div>
