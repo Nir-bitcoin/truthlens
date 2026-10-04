@@ -1,413 +1,1153 @@
+Absolutely. Below is the **complete, judge-focused `README.md`** for TruthLens, ready to copy-paste directly into GitHub.
+
+````markdown
 <div align="center">
 
 # 🔍 TruthLens
 
-### ⚡ *Don't just get answers. Get truth.*
+### *Don't just get answers. Get truth.*
 
 **AI Document Investigator**
 
-[![Python](https://img.shields.io/badge/Python-3.10+-yellow?style=for-the-badge&logo=python)]()
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.0+-red?style=for-the-badge&logo=streamlit)]()
-[![Groq](https://img.shields.io/badge/Groq-API-orange?style=for-the-badge)]()
-[![License](https://img.shields.io/badge/License-MIT-success?style=for-the-badge)]()
+Upload documents. Ask questions. Compare evidence. Detect conflicts. Know when the evidence is not enough.
 
-**⭐ Star the repo if TruthLens helped you find the truth!**
+<br>
 
-<img src="docs/truthlens-hero.svg" alt="TruthLens: Ask, Retrieve, Compare, Answer" width="100%">
-
-</div>
-
----
-
-## 📖 Table of Contents
-
-| **🚀 Start** | **💡 Learn** | **⚙️ Features** | **👀 See it** |
-|:---:|:---:|:---:|:---:|
-| [Quick Start](#-quick-start) | [Problem](#-problem) | [Core Features](#-core-features) | [Demo](#-demo) |
-| [How to use](#-how-to-use) | [Solution](#-solution) | [Advanced Features](#-advanced-features) | [Architecture](#-architecture) |
-| | [Why TruthLens](#-why-truthlens) | [Technical Features](#-technical-features) | [Tech Stack](#-tech-stack) |
-| | [Innovation](#-innovation) | [Language Support](#-language-support) | |
-
-| **🧪 Quality** | **📊 Impact** | **👥 Community** | **📦 Project** |
-|:---:|:---:|:---:|:---:|
-| [Testing](#-testing) | [Comparison](#-comparison) | [Contributing](#-contributing) | [Roadmap](#-roadmap) |
-| | | | [License](#-license) |
-
----
-
-## 🎯 Problem
-
-<div align="center">
-
-| ❌ Current AI Tools | 💥 The Result |
-|:---:|:---:|
-| Give confident but **wrong** answers | Users waste **hours** reading documents |
-| **Don't show** evidence | **No trust** in AI answers |
-| **Can't detect** contradictions | **Critical errors** go unnoticed |
-| **Can't say** "I don't know" | **Hallucinations** everywhere |
-| Only support **English** | **Language barrier** for billions |
-
-</div>
-
-> **Information is scattered** across PDFs, images, and text documents, often in **multiple languages**. Users waste hours manually reading documents, and basic AI chatbots confidently give wrong or unsupported answers.
-
----
-
-## ✨ Solution
-
-<div align="center">
-
-### 🔍 TruthLens — The AI Document Investigator
-┌─────────────────────────────────────────────────────────────┐
-│ │
-│ RETRIEVE → COMPARE → DETECT → DECIDE → ANSWER │
-│ │
-│ Supporting Evidence + Contradicting Evidence │
-│ ↓ │
-│ EVIDENCE COMPARISON │
-│ ↓ │
-│ ✅ AGREE | ⚠️ CONFLICT | 🟡 INSUFFICIENT │
-│ │
-└─────────────────────────────────────────────────────────────┘
-
-</div>
-
-> **TruthLens doesn't just answer, it investigates.**
-
-Before returning a conclusion, it:
-1. **Searches** for supporting evidence
-2. **Searches** for contradicting evidence
-3. **Detects** conflicts across documents
-4. **Identifies** missing evidence
-5. **Decides** if the answer is reliable
-6. **Tells you** what would resolve the uncertainty
-
----
-
-## 🤔 Why TruthLens?
-
-<div align="center">
-
-| Feature | Normal RAG | **TruthLens** |
-|:---|:---:|:---:|
-| Answers questions | ✅ | ✅ |
-| Shows citations | ⚠️ Partial | ✅ **Exact page** |
-| Detects conflicts | ❌ | ✅ **Claim-level** |
-| Says "I don't know" | ❌ | ✅ **Honest** |
-| Counter-evidence | ❌ | ✅ **Active search** |
-| Multi-language | ⚠️ Often English-only | ✅ **11 languages** |
-| Evidence confidence | ❌ | ✅ **Evidence-based** |
-| Hallucination firewall | ❌ | ✅ **No evidence = No answer** |
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
+![Streamlit](https://img.shields.io/badge/UI-Streamlit-red)
+![FAISS](https://img.shields.io/badge/Search-FAISS-green)
+![Groq](https://img.shields.io/badge/LLM-Groq-orange)
+![OCR](https://img.shields.io/badge/OCR-Tesseract-purple)
+![License](https://img.shields.io/badge/License-MIT-black)
 
 </div>
 
 ---
 
-## 🏆 Innovation
+# 🧠 The Problem
 
-<div align="center">
+Organizations rarely keep information in one clean document.
 
-| # | Innovation | Impact |
-|:---:|:---|:---|
-| 1 | **Conflict Detection** | Finds contradictions at claim-level |
-| 2 | **"I Don't Know" Engine** | Refuses to answer without evidence |
-| 3 | **Counter-Evidence 2.0** | Actively tries to disprove the answer |
-| 4 | **Evidence Gap Detector** | Tells what's missing |
-| 5 | **Multi-Bhasha** | 11 languages supported |
-| 6 | **Evidence Confidence** | Score based on the evidence, not a guessed percentage |
-| 7 | **Evidence Chain** | Full proof, traceable |
-| 8 | **Hallucination Firewall** | No evidence = No answer |
-| 9 | **Cross-Lingual Retrieval** | Hindi question + English docs |
-| 10 | **Temporal Truth Engine** | Distinguishes time-based changes from real conflicts |
-| 11 | **Source Drift Detection** | Detects changes across document versions |
-| 12 | **Claim Dependency Graph** | Visual graph of claims and their evidence |
+Important facts can be scattered across:
 
-</div>
+- 📄 PDFs
+- 📝 DOCX files
+- 📃 Text files
+- 🖼️ Scanned documents
+- 📧 Reports and emails
+- 🌐 Documents written in different languages
 
-> **"Baaki AI answers dete hain. TruthLens batata hai ki answer bharosemand hai ya nahi."**
+Traditional document Q&A systems can retrieve relevant text and generate an answer.
 
----
+But there is a bigger problem:
 
-## 🔥 Features
+> **What happens when the documents disagree?**
 
-TruthLens has **38 features** in total: 7 core, 12 advanced, 8 technical, and 11 supported languages.
+For example:
 
-### 🔴 Core Features
+**HR Document**
 
-<img src="docs/features-core.svg" alt="Core features" width="100%">
+> Employee joining date: January 15, 2024
 
-| # | Feature | File | Status |
-|:---:|:---|:---|:---:|
-| 1 | Multi-format upload (PDF, DOCX, TXT, PNG, JPG) | `parser.py` | ✅ |
-| 2 | Multi-document support (3+ files) | `app.py` | ✅ |
-| 3 | Extraction + Indexing (LaBSE + FAISS) | `embeddings.py` | ✅ |
-| 4 | Natural-language Q&A | `llm.py` | ✅ |
-| 5 | Source citations (file + page) | `llm.py` | ✅ |
-| 6 | Conflict detection (claim-level) | `conflict.py` | ✅ |
-| 7 | Uncertainty handling ("I don't know") | `conflict.py` | ✅ |
+**Manager Email**
 
-### 🟠 Advanced Features
+> Employee joined on January 20, 2024
 
-<img src="docs/features-advanced.svg" alt="Advanced features" width="100%">
+A normal RAG system may simply select one piece of evidence and confidently answer.
 
-| # | Feature | File | Status |
-|:---:|:---|:---|:---:|
-| 8 | Counter-Evidence 2.0 (supporting + contradicting) | `conflict.py` | ✅ |
-| 9 | Evidence Gap Detector | `conflict.py` | ✅ |
-| 10 | Resolution Evidence ("what would resolve this?") | `conflict.py` | ✅ |
-| 11 | Evidence Confidence Score | `conflict.py` | ✅ |
-| 12 | Evidence Chain | `app.py` | ✅ |
-| 13 | Conflict Graph (Plotly) | `graph.py` | ✅ |
-| 14 | Hallucination Firewall | `app.py` | ✅ |
-| 15 | Empty-State Protection | `app.py` | ✅ |
-| 16 | Cross-Lingual Retrieval | `app.py` | ✅ |
-| 17 | Auto-Process | `app.py` | ✅ |
-| 18 | Claim Extraction | `conflict.py` | ✅ |
-| 19 | Answerability Check | `conflict.py` | ✅ |
-| 20 | Temporal Truth Engine | `conflict.py` | ✅ |
-| 21 | Source Drift Detection | `conflict.py` | ✅ |
-| 22 | Claim Dependency Graph | `conflict.py` + `graph.py` | ✅ |
+That can be dangerous.
 
-### 🟡 Technical Features
-
-<img src="docs/features-technical.svg" alt="Technical features" width="100%">
-
-| # | Feature | File | Status |
-|:---:|:---|:---|:---:|
-| 23 | Groq API (fast and free) | `llm.py` | ✅ |
-| 24 | openai/gpt-oss-120b model | `llm.py` | ✅ |
-| 25 | Strong multilingual embedding model | `embeddings.py` | ✅ |
-| 26 | Top-30 retrieval | `app.py` | ✅ |
-| 27 | Query translation | `app.py` | ✅ |
-| 28 | OCR support (scanned PDFs and images) | `parser.py` | ✅ |
-| 29 | Page number preservation | `embeddings.py` | ✅ |
-| 30 | Caching | `translator.py` | ✅ |
-
-### 🌍 Language Support
-
-<img src="docs/languages.svg" alt="Supported languages" width="100%">
-
-<div align="center">
-
-| Language | Code | Status | Language | Code | Status |
-|:---|:---:|:---:|:---|:---:|:---:|
-| English | en | ✅ | Marathi | mr | ✅ |
-| Hindi | hi | ✅ | Tamil | ta | ✅ |
-| Bengali | bn | ✅ | Telugu | te | ✅ |
-| Gujarati | gu | ✅ | Kannada | kn | ✅ |
-| Malayalam | ml | ✅ | Punjabi | pa | ✅ |
-| Urdu | ur | ✅ | | | |
-
-**11 languages supported. Ask in one language, search documents in another.**
-
-</div>
+TruthLens approaches the problem differently.
 
 ---
 
-## 🧠 Architecture
+# 🎯 Our Solution
 
-<div align="center">
-USER QUESTION
+## TruthLens — AI Document Investigator
+
+TruthLens doesn't just search for evidence supporting an answer.
+
+It investigates the available evidence.
+
+### Investigation Pipeline
+
+```text
+                    USER QUESTION
+                          │
+                          ▼
+                  LANGUAGE DETECTION
+                          │
+                          ▼
+                 QUERY UNDERSTANDING
+                          │
+                          ▼
+                 CROSS-LINGUAL SEARCH
+                          │
+                          ▼
+                 EVIDENCE RETRIEVAL
+                          │
+                ┌─────────┴─────────┐
+                ▼                   ▼
+        SUPPORTING EVIDENCE   COUNTER EVIDENCE
+                │                   │
+                └─────────┬─────────┘
+                          ▼
+                  CLAIM EXTRACTION
+                          │
+                          ▼
+                  CONFLICT DETECTION
+                          │
+                ┌─────────┴─────────┐
+                ▼                   ▼
+          EVIDENCE SUFFICIENT   EVIDENCE MISSING
+                │                   │
+                ▼                   ▼
+             ANSWER          UNCERTAIN / I DON'T KNOW
+                │
+                ▼
+          SOURCES + CITATIONS
+                │
+                ▼
+        EVIDENCE CONFIDENCE
+````
+
+The goal is not to make the AI sound confident.
+
+The goal is to make the answer **evidence-aware**.
+
+---
+
+# 🚀 What Makes TruthLens Different?
+
+| Capability                | Traditional RAG | TruthLens |
+| ------------------------- | --------------: | --------: |
+| Multiple documents        |               ✅ |         ✅ |
+| Natural-language Q&A      |               ✅ |         ✅ |
+| Source citations          |       Sometimes |         ✅ |
+| Page-level references     |       Sometimes |         ✅ |
+| Multilingual queries      |         Limited |         ✅ |
+| Cross-lingual retrieval   |         Limited |         ✅ |
+| Conflict detection        |               ❌ |         ✅ |
+| Counter-evidence search   |               ❌ |         ✅ |
+| Evidence gap detection    |               ❌ |         ✅ |
+| "I don't know" behavior   |         Limited |         ✅ |
+| Evidence confidence       |         Limited |         ✅ |
+| Evidence chain            |               ❌ |         ✅ |
+| Conflict graph            |               ❌ |         ✅ |
+| Temporal reasoning        |               ❌ |         ✅ |
+| Source drift analysis     |               ❌ |         ✅ |
+| Claim dependency analysis |               ❌ |         ✅ |
+| Evidence-gated answering  |         Limited |         ✅ |
+
+---
+
+# ⭐ Key Innovation
+
+## TruthLens does not only ask:
+
+> "What evidence supports this answer?"
+
+It also asks:
+
+> "What evidence could contradict it?"
+
+And when the evidence is insufficient:
+
+> **"What evidence is missing?"**
+
+This creates an investigation workflow instead of a simple question-answering workflow.
+
+---
+
+# 🔥 Core Features
+
+## 1. 📂 Multi-Format Documents
+
+TruthLens supports investigation across multiple document formats:
+
+* PDF
+* DOCX
+* TXT
+* PNG
+* JPG
+
+Scanned documents can be processed using OCR.
+
+---
+
+## 2. 📚 Multi-Document Investigation
+
+Users can upload multiple documents into the same investigation session.
+
+TruthLens searches across the entire document collection rather than treating each file independently.
+
+---
+
+## 3. 🔎 Semantic Evidence Retrieval
+
+Documents are:
+
+1. Extracted
+2. Cleaned
+3. Chunked
+4. Embedded
+5. Indexed
+6. Retrieved using semantic similarity
+
+The system uses multilingual embeddings with FAISS for efficient evidence retrieval.
+
+---
+
+## 4. 🌍 Cross-Lingual Retrieval
+
+A user can ask a question in one language while relevant evidence exists in another.
+
+For example:
+
+```text
+Question:
+कर्मचारी की joining date क्या है?
+
+Document:
+Employee Start Date: January 15, 2024
+```
+
+TruthLens can retrieve relevant evidence across supported languages.
+
+---
+
+# 🌐 Supported Languages
+
+TruthLens currently supports:
+
+| Language  | Code |
+| --------- | ---- |
+| English   | `en` |
+| Hindi     | `hi` |
+| Marathi   | `mr` |
+| Tamil     | `ta` |
+| Bengali   | `bn` |
+| Telugu    | `te` |
+| Gujarati  | `gu` |
+| Kannada   | `kn` |
+| Malayalam | `ml` |
+| Punjabi   | `pa` |
+| Urdu      | `ur` |
+
+---
+
+# ⚔️ Claim-Level Conflict Detection
+
+Not every difference between two documents is a contradiction.
+
+TruthLens attempts to compare claims based on:
+
+* Entity
+* Attribute
+* Value
+* Context
+* Time
+
+For example:
+
+```text
+Employee salary in 2024 = ₹8 LPA
+Employee salary in 2025 = ₹9 LPA
+```
+
+This is not automatically treated as a contradiction.
+
+However:
+
+```text
+Joining Date = 15 January 2024
+
+Joining Date = 20 January 2024
+```
+
+represents a potential conflict because the same attribute has incompatible values.
+
+---
+
+# 🛡️ Evidence-Gated Answering
+
+TruthLens uses an evidence-first workflow.
+
+```text
+Question
+   │
+   ▼
+Retrieve Evidence
+   │
+   ├── No useful evidence
+   │          │
+   │          ▼
+   │      I DON'T KNOW
+   │
+   └── Evidence found
+              │
+              ▼
+       Check sufficiency
+              │
+        ┌─────┴─────┐
+        ▼           ▼
+   Sufficient    Insufficient
+        │           │
+        ▼           ▼
+      Answer     Uncertain /
+                 I DON'T KNOW
+```
+
+The system is designed to avoid generating a confident answer when the available evidence is insufficient.
+
+---
+
+# 🔥 Counter-Evidence Search
+
+Most retrieval systems focus primarily on finding evidence that supports a candidate answer.
+
+TruthLens explicitly searches for evidence that may challenge the candidate answer.
+
+### Example
+
+Question:
+
+> Was the employee eligible for promotion?
+
+### Supporting evidence
+
+```text
+Performance Score: 91%
+
+Manager Recommendation: Positive
+```
+
+### Counter evidence
+
+```text
+Promotion policy requires 5 years of service.
+Employee service record shows 3 years.
+```
+
+TruthLens can surface both sides instead of presenting only the supporting evidence.
+
+---
+
+# 🕳️ Evidence Gap Detection
+
+Sometimes the documents contain related information but still do not contain enough evidence to reach a reliable conclusion.
+
+TruthLens identifies this situation as an **Evidence Gap**.
+
+Example:
+
+```text
+Available:
+✓ Performance score
+✓ Service duration
+✓ Manager recommendation
+
+Missing:
+? Required approval record
+```
+
+Instead of inventing the missing information, the system communicates that additional evidence is needed.
+
+---
+
+# 🧩 Resolution Evidence
+
+When evidence conflicts or is insufficient, TruthLens can identify what type of additional evidence could help resolve the investigation.
+
+Example:
+
+```text
+Conflict:
+Joining date differs between two records.
+
+Potential resolution evidence:
+• Official HR joining record
+• Signed employment agreement
+• Payroll onboarding record
+```
+
+This turns the system from a simple answer generator into an investigation assistant.
+
+---
+
+# ⚔️ Evidence Battle
+
+TruthLens can evaluate a claim from two perspectives.
+
+### 🟢 Supporter
+
+> Why is this claim true?
+
+### 🔴 Skeptic
+
+> Why might this claim be false?
+
+The system compares:
+
+```text
+Supporting Evidence
+        VS
+Counter Evidence
+        │
+        ▼
+   Final Assessment
+```
+
+Possible outcomes include:
+
+* `AGREE`
+* `CONFLICT`
+* `INSUFFICIENT`
+
+This helps reduce one-sided evidence selection.
+
+---
+
+# 📊 Evidence Confidence
+
+TruthLens provides an **Evidence Confidence / Evidence Score** based on factors such as:
+
+* Evidence relevance
+* Evidence coverage
+* Agreement between sources
+* Contradicting evidence
+* Missing evidence
+
+The score is intended as an evidence-quality indicator.
+
+It is **not presented as an objective probability that an answer is true**.
+
+Example:
+
+```text
+Evidence Confidence
+██████████████░░░░ 72%
+
+Evidence Strength: MODERATE
+
+Supporting Sources: 4
+Counter Sources: 1
+Conflicts: 1
+```
+
+---
+
+# 🔗 Evidence Chain
+
+TruthLens can show how the final answer was derived.
+
+```text
+Question
+   ↓
+Retrieved Evidence
+   ↓
+Claims
+   ↓
+Supporting / Counter Evidence
+   ↓
+Conflict Analysis
+   ↓
+Evidence Sufficiency
+   ↓
+Final Answer
+```
+
+This provides an investigation trail instead of only showing the final response.
+
+---
+
+# 🕸️ Conflict Graph
+
+Conflicting claims can be visualized as a graph.
+
+Example:
+
+```text
+          ┌───────────────────┐
+          │ HR Document       │
+          │ Jan 15, 2024      │
+          └─────────┬─────────┘
+                    │
+                 CONFLICT
+                    │
+                    ▼
+          ┌───────────────────┐
+          │ Manager Email     │
+          │ Jan 20, 2024      │
+          └───────────────────┘
+```
+
+This helps investigators quickly understand relationships between documents and claims.
+
+---
+
+# ⏳ Temporal Truth Analysis
+
+Information can change over time.
+
+TruthLens considers temporal context when evaluating claims.
+
+Example:
+
+```text
+Salary:
+2024 → ₹8 LPA
+2025 → ₹9 LPA
+```
+
+Rather than treating every changed value as a contradiction, the system can consider the time associated with the claim.
+
+---
+
+# 🔄 Source Drift Detection
+
+Documents can become outdated as policies, values, or records change.
+
+TruthLens includes source-drift analysis to help identify cases where information may have changed across documents or over time.
+
+---
+
+# 🧠 Claim Dependency Graph
+
+Some claims depend on other claims.
+
+Example:
+
+```text
+Promotion Eligibility
+        │
+        ├── Service Duration
+        │
+        ├── Performance Score
+        │
+        └── Required Approval
+```
+
+If an important dependency is missing, the final conclusion may remain uncertain.
+
+---
+
+# 🛠️ Technical Architecture
+
+```text
+                    ┌──────────────────┐
+                    │   Streamlit UI   │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Document Parser  │
+                    │ PDF/DOCX/TXT/OCR │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Chunking +       │
+                    │ Metadata         │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Multilingual     │
+                    │ Embeddings       │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ FAISS Vector     │
+                    │ Index            │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Top-K Retrieval  │
+                    └────────┬─────────┘
+                             │
+              ┌──────────────┼──────────────┐
+              ▼              ▼              ▼
+        Supporting      Counter          Missing
+         Evidence       Evidence         Evidence
+              │              │              │
+              └──────────────┼──────────────┘
+                             ▼
+                    ┌──────────────────┐
+                    │ Claim Extraction │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Conflict Engine  │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Evidence /       │
+                    │ Answerability    │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Groq LLM         │
+                    │ GPT-OSS-120B     │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Answer + Sources │
+                    │ + Confidence     │
+                    └──────────────────┘
+```
+
+---
+
+# 🧰 Technology Stack
+
+## Frontend
+
+* Streamlit
+
+## Programming
+
+* Python
+
+## Document Processing
+
+* PDF parsing
+* DOCX parsing
+* TXT processing
+* OCR
+* Tesseract
+
+## Retrieval
+
+* Multilingual embeddings
+* FAISS
+* Top-K semantic retrieval
+
+## LLM
+
+* Groq API
+* `openai/gpt-oss-120b`
+
+## Translation / Language
+
+* Language detection
+* Cross-lingual query processing
+* Translation support
+
+## Visualization
+
+* Plotly
+* NetworkX
+
+## Storage / Utilities
+
+* SQLite
+* Local caching
+
+---
+
+# 📁 Project Structure
+
+```text
+truthlens/
 │
-▼
-LANGUAGE DETECTION
+├── app.py
 │
-▼
-CROSS-LINGUAL SEARCH
+├── backend/
+│   ├── parser.py
+│   ├── embeddings.py
+│   ├── retrieval.py
+│   ├── llm.py
+│   ├── conflict.py
+│   └── translator.py
 │
-▼
-EVIDENCE RETRIEVAL
+├── utils/
+│   └── graph.py
 │
-┌──────────┴──────────┐
-▼ ▼
-SUPPORTING COUNTER
-EVIDENCE EVIDENCE
-│ │
-└──────────┬──────────┘
-▼
-CLAIM EXTRACTION
-│
-▼
-CONFLICT DETECTION
-│
-┌──────────┴──────────┐
-▼ ▼
-EVIDENCE GAP EVIDENCE OK
-│ │
-▼ ▼
-WHAT EVIDENCE IS ANSWER + SOURCES
-NEEDED? │
-│ ▼
-│ CONFIDENCE SCORE
-│ │
-└──────────┬──────────┘
-▼
-INVESTIGATION
-REPORT
-
-</div>
+├── requirements.txt
+├── README.md
+└── .gitignore
+```
 
 ---
 
+# ⚙️ Installation
 
-</div>
-
----
-
-## 🧰 Tech Stack
-
-<div align="center">
-
-| Layer | Technology | Purpose |
-|:---|:---|:---|
-| **Frontend** | Streamlit | UI |
-| **Backend** | Python 3.10+ | Core logic |
-| **Embeddings** | LaBSE (multilingual) | 100+ languages |
-| **Vector Store** | FAISS | Fast retrieval |
-| **LLM** | Groq (openai/gpt-oss-120b) | Answer generation |
-| **Translation** | deep-translator | Multi-bhasha |
-| **Visualization** | Plotly | Conflict graph |
-| **OCR** | Tesseract | Scanned documents |
-| **Database** | SQLite | Metadata |
-
-</div>
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Python 3.10+
-- Groq API Key ([Get free key](https://console.groq.com/keys))
-
-### Installation
+## 1. Clone the repository
 
 ```bash
-# Clone repo
 git clone https://github.com/Nir-bitcoin/truthlens.git
 cd truthlens
-
-# Create virtual environment
-python -m venv venv
-venv\Scripts\activate  # Windows
-source venv/bin/activate  # Mac/Linux
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Setup environment
-echo "GROQ_API_KEY=gsk_your_key_here" > .env
-
-# Run app
-streamlit run app.py
-### Access
-
-Open browser: `http://localhost:8501`
+```
 
 ---
 
-## 🆓 How to use
+## 2. Create a virtual environment
 
-Once the app is running, you only need three steps:
-
-1. Upload one or more documents (PDF, DOCX, TXT, or images).
-2. Ask any question, in any of the 11 supported languages.
-3. Read the answer with its citations, conflicts, and confidence score.
-
----
-
-## 🧪 Testing
-
-### Run Automated Tests
+### Windows
 
 ```bash
-python backend/test_truthlens.py
-Test Results
-#	Test	Status
-1	Parser	✅ PASSED
-2	Language Detection	✅ PASSED
-3	Language Names	✅ PASSED
-4	No Evidence	✅ PASSED
-5	Strong Evidence	✅ PASSED
-6	Conflict Detection	✅ PASSED
-7	Confidence Calculation	✅ PASSED
-8	Conflict Penalty	✅ PASSED
-All 8 tests passing ✅
+python -m venv venv
+venv\Scripts\activate
+```
 
-🎬 Demo
-Example outputs (sample documents, numbers are illustrative).
+### Linux / macOS
 
-Scenario 1: Normal Question
-text
-Question: "What is the refund policy?"
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
 
-Answer: The refund policy allows returns within 30 days of purchase.
-[policy.pdf, Page 4]
+---
 
-Evidence Confidence: 92%
-Scenario 2: Conflicting Documents
-text
-Question: "When did employee join?"
+## 3. Install dependencies
 
-⚠️ CONFLICT DETECTED
-- contract.txt: January 15, 2024
-- hr.txt: January 20, 2024
+```bash
+pip install -r requirements.txt
+```
 
-Answer: Cannot determine reliably.
+---
 
-Evidence Confidence: 31%
-🆚 Comparison
-<div align="center">
-Feature	Basic RAG chatbot	TruthLens
-Multi-format	⚠️ Often PDF only	✅ PDF, DOCX, TXT, images
-Multi-language	⚠️ Often English-only	✅ 11 languages
-Conflict detection	❌	✅ Claim-level
-"I don't know"	❌	✅ Honest
-Counter-evidence	❌	✅ Active
-Evidence confidence	⚠️ Single guessed %	✅ Evidence-based
-Evidence chain	❌	✅ Full proof
-Hallucination firewall	❌	✅ No evidence = No answer
-Temporal analysis	❌	✅ Time-aware
-Source drift	❌	✅ Version detection
-Claim graph	❌	✅ Visual dependency
-</div>
-📈 Roadmap
-Version	Feature	Status
-v1.0	Core Q&A + Citations	✅
-v1.1	Conflict Detection	✅
-v1.2	Multi-Bhasha	✅
-v1.3	Counter-Evidence 2.0	✅
-v1.4	Evidence Gap + Resolution	✅
-v2.0	Temporal Conflict Detection	✅
-v2.1	Claim Dependency Graph	✅
-v2.2	Source Drift Detection	✅
-👥 Team
-<div align="center">
-Member	Role
-Niranjan vishe	Developer
-</div>
-🤝 Contributing
-Contributions are welcome!
+# 🔑 API Configuration
 
-Fork the repository
+TruthLens uses the Groq API for LLM-based reasoning.
 
-Create your feature branch (git checkout -b feat/amazing-feature)
+Create an environment variable:
 
-Commit your changes (git commit -m 'feat: add amazing feature')
+```text
+GROQ_API_KEY=your_api_key_here
+```
 
-Push to the branch (git push origin feat/amazing-feature)
+Do not commit API keys to GitHub.
 
-Open a Pull Request
+Recommended:
 
-📄 License
-MIT License. See LICENSE for details.
+```text
+.env
+```
 
-<div align="center">
-⭐ Star this repo if you found it useful!
-Built with ❤️
+and add it to `.gitignore`.
 
-Don't just get answers. Get truth.
-⬆ Back to top
+---
 
-</div> ```
+# ▶️ Run TruthLens
+
+Start the application:
+
+```bash
+streamlit run app.py
+```
+
+Then open the local Streamlit URL shown in the terminal.
+
+---
+
+# 🧪 How To Use
+
+### Step 1 — Upload Documents
+
+Upload one or more:
+
+```text
+PDF
+DOCX
+TXT
+PNG
+JPG
+```
+
+---
+
+### Step 2 — Process Documents
+
+TruthLens extracts the content, creates chunks, generates embeddings and builds the searchable evidence index.
+
+---
+
+### Step 3 — Ask a Question
+
+Ask naturally.
+
+Example:
+
+```text
+What is the employee's joining date?
+```
+
+Or:
+
+```text
+कर्मचारी ने कब जॉइन किया?
+```
+
+---
+
+### Step 4 — Investigate
+
+TruthLens retrieves relevant evidence and searches for:
+
+* Supporting claims
+* Contradicting claims
+* Missing evidence
+* Related claims
+* Temporal context
+
+---
+
+### Step 5 — Review the Result
+
+The investigation can show:
+
+```text
+Verdict
+Answer
+Evidence Confidence
+Supporting Evidence
+Counter Evidence
+Conflicts
+Evidence Chain
+Citations
+Missing Evidence
+```
+
+---
+
+# 🎬 Example Investigation
+
+Suppose three documents contain:
+
+### `contract.txt`
+
+```text
+Employee joining date: January 15, 2024
+```
+
+### `hr.txt`
+
+```text
+Employee start date: January 20, 2024
+```
+
+### `email.txt`
+
+```text
+Employment begins January 15, 2024
+```
+
+Question:
+
+```text
+कर्मचारी ने कब जॉइन किया?
+```
+
+A simple RAG system might return:
+
+> January 15, 2024
+
+TruthLens instead identifies the disagreement.
+
+```text
+⚠ CONFLICT DETECTED
+
+January 15, 2024
+Sources:
+• contract.txt
+• email.txt
+
+VS
+
+January 20, 2024
+Source:
+• hr.txt
+```
+
+The system can therefore respond with an uncertainty-aware result rather than pretending that one document is automatically correct.
+
+---
+
+# 🧪 Testing
+
+The project includes validation for important components.
+
+Current test coverage includes:
+
+```text
+✓ Parser
+✓ Language Detection
+✓ Language Names
+✓ No Evidence Handling
+✓ Strong Evidence Handling
+✓ Conflict Detection
+✓ Confidence Calculation
+✓ Conflict Penalty
+```
+
+Example expected behavior:
+
+```text
+No Evidence
+      ↓
+I DON'T KNOW / INSUFFICIENT EVIDENCE
+```
+
+rather than an unsupported generated answer.
+
+---
+
+# 🛡️ Reliability Principles
+
+TruthLens follows several design principles.
+
+### 1. Evidence Before Answer
+
+The system retrieves evidence before generating an answer.
+
+### 2. No Evidence → No Confident Answer
+
+If useful evidence is unavailable, the system should communicate uncertainty.
+
+### 3. Conflicts Are First-Class Signals
+
+Contradictory evidence should not be silently ignored.
+
+### 4. Citations Come From Document Metadata
+
+Source references are associated with retrieved document chunks rather than being invented by the LLM.
+
+Example metadata:
+
+```python
+{
+    "file": "contract.pdf",
+    "page": 3,
+    "chunk_id": "contract_p3_c2",
+    "text": "..."
+}
+```
+
+The UI can then render the corresponding source and page.
+
+### 5. Evidence Score ≠ Truth Probability
+
+The confidence indicator summarizes evidence quality and agreement. It is not a guarantee of factual truth.
+
+---
+
+# 🏆 ALGOTHON'26 — Problem Alignment
+
+TruthLens is built for:
+
+## ALG-AI-02 — Intelligent Document Investigator
+
+The problem statement requires a platform that can:
+
+* Accept multiple documents
+* Extract and index information
+* Answer natural-language questions
+* Provide source / section references
+* Detect conflicts
+* Handle uncertainty
+
+TruthLens directly targets these requirements.
+
+---
+
+# 📊 Judging Criteria Alignment
+
+| Criteria                   | TruthLens Implementation                                |
+| -------------------------- | ------------------------------------------------------- |
+| Functionality & Completion | Multi-document investigation pipeline                   |
+| Technical Implementation   | Embeddings + FAISS + OCR + LLM + evidence engine        |
+| Innovation                 | Counter-evidence, conflict detection, evidence gaps     |
+| UX / Presentation          | Investigation dashboard with evidence visibility        |
+| Testing / Reliability      | Evidence gating, uncertainty handling, validation tests |
+| Problem Understanding      | Designed specifically around document investigation     |
+
+---
+
+# 💡 Real-World Applications
+
+TruthLens can be useful in domains where documents need to be compared before making decisions.
+
+### 🏢 HR
+
+Compare:
+
+* Employment contracts
+* HR records
+* Emails
+* Policies
+
+### ⚖️ Legal
+
+Compare:
+
+* Agreements
+* Clauses
+* Amendments
+* Supporting documents
+
+### 💰 Finance
+
+Compare:
+
+* Reports
+* Statements
+* Invoices
+* Financial records
+
+### 🏥 Healthcare
+
+Compare:
+
+* Reports
+* Medical documents
+* Records
+* Instructions
+
+### 🏛️ Compliance
+
+Compare:
+
+* Policies
+* Regulations
+* Internal documentation
+* Audit records
+
+---
+
+# 🔐 Privacy
+
+TruthLens is designed around user-provided investigation documents.
+
+For production deployment, appropriate security controls should be added for:
+
+* Authentication
+* Authorization
+* Encryption
+* Secure document storage
+* API-key management
+* Data retention
+* Audit logging
+
+Do not upload confidential or sensitive documents to an untrusted deployment.
+
+---
+
+# 🔮 Future Improvements
+
+Potential future work includes:
+
+* Better calibrated evidence scoring
+* More robust temporal reasoning
+* Advanced document layout understanding
+* Table-aware extraction
+* Better OCR for complex documents
+* Human-in-the-loop verification
+* Enterprise authentication
+* Secure document-level permissions
+* More explainable conflict resolution
+* Larger multilingual model support
+
+---
+
+# 🗺️ Development Roadmap
+
+```text
+v1.0  Core Q&A + Citations              ✅
+v1.1  Conflict Detection                ✅
+v1.2  Multi-Language Support            ✅
+v1.3  Counter-Evidence                  ✅
+v1.4  Evidence Gap + Resolution         ✅
+v2.0  Temporal Analysis                 ✅
+v2.1  Claim Dependency Graph            ✅
+v2.2  Source Drift Detection            ✅
+```
+
+---
+
+# 🤝 Contributing
+
+Contributions are welcome.
+
+Possible areas for improvement:
+
+* Better retrieval
+* More document formats
+* Improved OCR
+* Better multilingual support
+* Evaluation datasets
+* Conflict-resolution algorithms
+* UI improvements
+* Performance optimization
+
+---
+
+# 📜 License
+
+This project is licensed under the MIT License.
+
+---
+
+# 👨‍💻 Team
+
+### Niranjan Vishe
+
+Computer Engineering Student
+
+**ALGOTHON'26**
+
+Problem Statement:
+
+**ALG-AI-02 — Intelligent Document Investigator**
+
+---
+
+# 🔗 Project
+
+GitHub:
+
+[https://github.com/Nir-bitcoin/truthlens](https://github.com/Nir-bitcoin/truthlens)
+
+---
+
+# 🎯 Final Idea
+
+> **TruthLens doesn't just answer from documents.**
+>
+> **It investigates the evidence before answering.**
+
+When the evidence agrees:
+
+```text
+✓ ANSWER
+```
+
+When the evidence conflicts:
+
+```text
+⚠ CONFLICT
+```
+
+When the evidence is insufficient:
+
+```text
+? INSUFFICIENT EVIDENCE
+```
+
+Because in document intelligence,
+
+> **A confident answer is not always a reliable answer.**
+
+### 🔍 TruthLens
+
+**Don't just get answers. Get truth.**
+
+```
+```
