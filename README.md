@@ -1,6 +1,3 @@
-Absolutely. Below is the **complete, judge-focused `README.md`** for TruthLens, ready to copy-paste directly into GitHub.
-
-````markdown
 <div align="center">
 
 # 🔍 TruthLens
@@ -19,6 +16,12 @@ Upload documents. Ask questions. Compare evidence. Detect conflicts. Know when t
 ![Groq](https://img.shields.io/badge/LLM-Groq-orange)
 ![OCR](https://img.shields.io/badge/OCR-Tesseract-purple)
 ![License](https://img.shields.io/badge/License-MIT-black)
+
+<img src="docs/truthlens-hero.svg" alt="TruthLens: Ask, Retrieve, Compare, Answer" width="100%">
+
+<img src="docs/truthlens-architecture.svg" alt="TruthLens Architecture" width="100%">
+
+<img src="docs/languages.svg" alt="11 Languages Supported" width="100%">
 
 </div>
 
@@ -109,7 +112,7 @@ It investigates the available evidence.
                 │
                 ▼
         EVIDENCE CONFIDENCE
-````
+```
 
 The goal is not to make the AI sound confident.
 
@@ -372,39 +375,6 @@ Potential resolution evidence:
 ```
 
 This turns the system from a simple answer generator into an investigation assistant.
-
----
-
-# ⚔️ Evidence Battle
-
-TruthLens can evaluate a claim from two perspectives.
-
-### 🟢 Supporter
-
-> Why is this claim true?
-
-### 🔴 Skeptic
-
-> Why might this claim be false?
-
-The system compares:
-
-```text
-Supporting Evidence
-        VS
-Counter Evidence
-        │
-        ▼
-   Final Assessment
-```
-
-Possible outcomes include:
-
-* `AGREE`
-* `CONFLICT`
-* `INSUFFICIENT`
-
-This helps reduce one-sided evidence selection.
 
 ---
 
