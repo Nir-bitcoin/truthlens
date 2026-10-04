@@ -1,8 +1,4 @@
-<p align="center">
-
-&#x20; <img src="docs/truthlens-hero.svg" alt="TruthLens" width="100%">
-
-</p>
+<h1 align="center">🔍 TruthLens</h1>
 
 
 
@@ -25,6 +21,24 @@
 &#x20; <img src="https://img.shields.io/badge/License-MIT-orange?style=flat-square" alt="MIT">
 
 </p>
+
+
+
+```
+
+&#x20;     \_\_\_\_\_\_              \_\_\_\_\_\_              \_\_\_\_\_\_              \_\_\_\_\_\_
+
+&#x20;    /      /|           /      /|           /      /|           /      /|
+
+&#x20;   /\_\_\_\_\_\_/ |          /\_\_\_\_\_\_/ |          /\_\_\_\_\_\_/ |          /\_\_\_\_\_\_/ |
+
+&#x20;   |  ?   | /          |  +-  | /          |  !=  | /          |  ok  | /
+
+&#x20;   |\_\_\_\_\_\_|/           |\_\_\_\_\_\_|/           |\_\_\_\_\_\_|/           |\_\_\_\_\_\_|/
+
+&#x20;       Ask               Retrieve            Compare              Answer
+
+```
 
 
 
@@ -92,17 +106,45 @@ TruthLens has 39 features in total: 7 core, 13 advanced, 8 technical, and 11 sup
 
 
 
-<p align="center">
-
-&#x20; <img src="docs/features-core.svg" alt="Core features" width="100%">
-
-</p>
+\### Core features
 
 
 
-| # | Core feature | Where |
+```
 
-|---|--------------|-------|
+&#x20;     \_\_\_\_\_\_            \_\_\_\_\_\_            \_\_\_\_\_\_            \_\_\_\_\_\_
+
+&#x20;    /      /|         /      /|         /      /|         /      /|
+
+&#x20;   /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |
+
+&#x20;   |  01  | /        |  02  | /        |  03  | /        |  04  | /
+
+&#x20;   |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/
+
+&#x20;  Multi-format     Multi-document   Extract + index   Natural-lang Q\&A
+
+
+
+&#x20;     \_\_\_\_\_\_            \_\_\_\_\_\_            \_\_\_\_\_\_
+
+&#x20;    /      /|         /      /|         /      /|
+
+&#x20;   /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |
+
+&#x20;   |  05  | /        |  06  | /        |  07  | /
+
+&#x20;   |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/
+
+&#x20;Source citations  Conflict detect     Uncertainty
+
+```
+
+
+
+| # | Feature | Where |
+
+|---|---------|-------|
 
 | 1 | Multi-format upload (PDF, DOCX, TXT, PNG, JPG) | `parser.py` |
 
@@ -120,17 +162,73 @@ TruthLens has 39 features in total: 7 core, 13 advanced, 8 technical, and 11 sup
 
 
 
-<p align="center">
-
-&#x20; <img src="docs/features-advanced.svg" alt="Advanced features" width="100%">
-
-</p>
+\### Advanced features
 
 
 
-| # | Advanced feature | Where |
+```
 
-|---|------------------|-------|
+&#x20;     \_\_\_\_\_\_            \_\_\_\_\_\_            \_\_\_\_\_\_            \_\_\_\_\_\_
+
+&#x20;    /      /|         /      /|         /      /|         /      /|
+
+&#x20;   /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |
+
+&#x20;   |  08  | /        |  09  | /        |  10  | /        |  11  | /
+
+&#x20;   |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/
+
+&#x20;Counter-Evidence    Evidence Gap    Resolution Evid.  Evidence Battle
+
+
+
+&#x20;     \_\_\_\_\_\_            \_\_\_\_\_\_            \_\_\_\_\_\_            \_\_\_\_\_\_
+
+&#x20;    /      /|         /      /|         /      /|         /      /|
+
+&#x20;   /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |
+
+&#x20;   |  12  | /        |  13  | /        |  14  | /        |  15  | /
+
+&#x20;   |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/
+
+&#x20;Confidence Score   Evidence Chain    Conflict Graph   Halluc. Firewall
+
+
+
+&#x20;     \_\_\_\_\_\_            \_\_\_\_\_\_            \_\_\_\_\_\_            \_\_\_\_\_\_
+
+&#x20;    /      /|         /      /|         /      /|         /      /|
+
+&#x20;   /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |
+
+&#x20;   |  16  | /        |  17  | /        |  18  | /        |  19  | /
+
+&#x20;   |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/
+
+Empty-State Guard   Cross-Lingual      Auto-Process    Claim Extraction
+
+
+
+&#x20;     \_\_\_\_\_\_
+
+&#x20;    /      /|
+
+&#x20;   /\_\_\_\_\_\_/ |
+
+&#x20;   |  20  | /
+
+&#x20;   |\_\_\_\_\_\_|/
+
+&#x20; Answerability
+
+```
+
+
+
+| # | Feature | Where |
+
+|---|---------|-------|
 
 | 8 | Counter-Evidence 2.0 (supporting + contradicting) | `conflict.py` |
 
@@ -160,17 +258,45 @@ TruthLens has 39 features in total: 7 core, 13 advanced, 8 technical, and 11 sup
 
 
 
-<p align="center">
-
-&#x20; <img src="docs/features-technical.svg" alt="Technical features" width="100%">
-
-</p>
+\### Technical features
 
 
 
-| # | Technical feature | Where |
+```
 
-|---|-------------------|-------|
+&#x20;     \_\_\_\_\_\_            \_\_\_\_\_\_            \_\_\_\_\_\_            \_\_\_\_\_\_
+
+&#x20;    /      /|         /      /|         /      /|         /      /|
+
+&#x20;   /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |
+
+&#x20;   |  21  | /        |  22  | /        |  23  | /        |  24  | /
+
+&#x20;   |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/
+
+&#x20;    Groq API        gpt-oss-120b   Strong embeddings  Top-30 retrieval
+
+
+
+&#x20;     \_\_\_\_\_\_            \_\_\_\_\_\_            \_\_\_\_\_\_            \_\_\_\_\_\_
+
+&#x20;    /      /|         /      /|         /      /|         /      /|
+
+&#x20;   /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |
+
+&#x20;   |  25  | /        |  26  | /        |  27  | /        |  28  | /
+
+&#x20;   |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/
+
+&#x20;Query translate     OCR support       Page numbers        Caching
+
+```
+
+
+
+| # | Feature | Where |
+
+|---|---------|-------|
 
 | 21 | Groq API (fast and free) | `llm.py` |
 
@@ -202,11 +328,49 @@ You can ask in one language and search documents written in another. For example
 
 
 
-<p align="center">
+```
 
-&#x20; <img src="docs/languages.svg" alt="Supported languages" width="100%">
+&#x20;     \_\_\_\_\_\_            \_\_\_\_\_\_            \_\_\_\_\_\_            \_\_\_\_\_\_
 
-</p>
+&#x20;    /      /|         /      /|         /      /|         /      /|
+
+&#x20;   /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |
+
+&#x20;   |  en  | /        |  hi  | /        |  mr  | /        |  ta  | /
+
+&#x20;   |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/
+
+&#x20;    English            Hindi            Marathi            Tamil
+
+
+
+&#x20;     \_\_\_\_\_\_            \_\_\_\_\_\_            \_\_\_\_\_\_            \_\_\_\_\_\_
+
+&#x20;    /      /|         /      /|         /      /|         /      /|
+
+&#x20;   /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |
+
+&#x20;   |  bn  | /        |  te  | /        |  gu  | /        |  kn  | /
+
+&#x20;   |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/
+
+&#x20;    Bengali            Telugu           Gujarati          Kannada
+
+
+
+&#x20;     \_\_\_\_\_\_            \_\_\_\_\_\_            \_\_\_\_\_\_
+
+&#x20;    /      /|         /      /|         /      /|
+
+&#x20;   /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |        /\_\_\_\_\_\_/ |
+
+&#x20;   |  ml  | /        |  pa  | /        |  ur  | /
+
+&#x20;   |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/         |\_\_\_\_\_\_|/
+
+&#x20;   Malayalam          Punjabi             Urdu
+
+```
 
 
 
@@ -462,7 +626,7 @@ Missing: manager approval record
 
 
 
-\## Team 
+\## Team 240
 
 
 
@@ -470,9 +634,9 @@ Missing: manager approval record
 
 |------|------|
 
-| Niranjan vishe | Developer |
+| \[Your name] | Developer |
 
-| \[
+| \[Teammate's name] | Developer |
 
 
 
