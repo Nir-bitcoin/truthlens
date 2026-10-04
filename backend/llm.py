@@ -1,5 +1,5 @@
 # llm.py
-# for: LLM se answer generate karna — citations ke saath
+# Kaam: LLM se answer generate karna — exact citations ke saath
 
 import os
 from openai import OpenAI
@@ -10,35 +10,42 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
-SYSTEM_PROMPT = """You are a document investigator.
+SYSTEM_PROMPT = """You are TruthLens, a document investigator.
 
-RULES:
+STRICT RULES:
 1. Answer ONLY from the provided context.
-2. Always cite source document + page/section.
-3. If context is insufficient, say: "Cannot determine reliably."
-4. If context has conflicts, highlight them.
-5. Never guess or hallucinate.
+2. Every answer MUST cite: [Document Name, Page X]
+3. If context doesn't have the answer, say: "Cannot determine reliably."
+4. NEVER make up information.
+5. If you find conflicting info, list BOTH versions.
 6. Answer in the same language as the question.
+7. Be concise — max 3 sentences.
 """
 
 
 def build_prompt(query, chunks):
     # Retrieved chunks ke saath prompt banata hai
-    context = "\n\n".join([
-        f"[Source: {c['file']} | Lang: {c['language']}]\n{c['text']}"
-        for c in chunks
-    ])
+    context_parts = []
+    for i, c in enumerate(chunks, 1):
+        page = c.get("page", "?")
+        context_parts.append(
+            f"[Source {i}: {c['file']}, Page {page}, Lang: {c['language']}]\n{c['text']}"
+        )
+    context = "\n\n".join(context_parts)
 
     return f"""Context:
 {context}
 
 Question: {query}
 
-Answer with citations:"""
+Answer with exact citations [Document, Page X]:"""
 
 
 def get_answer(query, chunks):
     # LLM se answer leta hai
+    if not chunks:
+        return "Cannot determine reliably. No relevant documents found."
+
     prompt = build_prompt(query, chunks)
 
     response = client.chat.completions.create(
@@ -51,11 +58,3 @@ def get_answer(query, chunks):
     )
 
     return response.choices[0].message.content
-
-
-# Test karne ke liye
-if __name__ == "__main__":
-    from retrieval import retrieve
-    chunks = retrieve("When did employee join?")
-    answer = get_answer("When did employee join?", chunks)
-    print(answer)
