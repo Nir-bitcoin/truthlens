@@ -1,7 +1,5 @@
 # conflict.py
-# Kaam: Claim extraction + conflict detection + answerability + confidence
-# + Counter-Evidence 2.0 + Evidence Gap + Resolution + Evidence Battle
-# + Temporal Truth Engine + Source Drift Detection + Claim Dependency Graph
+# Full conflict detection + counter-evidence + battle + temporal + drift + graph
 
 import os
 import json
@@ -48,69 +46,39 @@ Return ONLY valid JSON:
 
 COUNTER_EVIDENCE_2_PROMPT = """You are a rigorous investigation assistant.
 
-CRITICAL RULES:
-1. Extract EXACT numbers, dates, and facts from the evidence.
-2. Do NOT change or swap values.
-3. Candidate answer must be COPY-PASTED from evidence, not paraphrased.
-
 Given a question and evidence chunks:
 
-STEP 1: Generate a candidate answer by EXACTLY quoting the evidence.
+STEP 1: Generate a candidate answer.
 STEP 2: Find evidence that SUPPORTS this candidate answer.
 STEP 3: Find evidence that CONTRADICTS or WEAKENS this candidate answer.
 STEP 4: Compare and decide.
 
 Return ONLY valid JSON:
 {
-  "candidate_answer": "EXACT answer from evidence with numbers unchanged",
+  "candidate_answer": "the answer from evidence",
   "supporting_evidence": [
-    {
-      "source": "file name",
-      "page": "page number",
-      "claim": "supporting claim",
-      "strength": "strong/medium/weak"
-    }
+    {"source": "file", "page": "page", "claim": "claim", "strength": "strong/medium/weak"}
   ],
   "contradicting_evidence": [
-    {
-      "source": "file name",
-      "page": "page number",
-      "claim": "contradicting claim",
-      "impact": "why it weakens the answer"
-    }
+    {"source": "file", "page": "page", "claim": "claim", "impact": "why"}
   ],
   "final_decision": "supported/contradicted/uncertain",
-  "reasoning": "why this decision"
+  "reasoning": "why"
 }
 """
 
 
 GAP_DETECTOR_PROMPT = """You are an evidence gap detector.
 
-Given a question, retrieved evidence, and conflict analysis, identify:
-
-1. EVIDENCE GAPS — What evidence is MISSING to fully answer the question?
-2. RESOLUTION EVIDENCE — What specific document/record would resolve the uncertainty?
-
-CRITICAL RULES:
-- Do NOT invent arbitrary documents.
-- Derive gaps from: retrieved evidence + question + claim requirements.
-- Be specific: "Latest signed amendment" not just "more documents".
-- If answer is complete, return empty lists.
+Given a question and available evidence, identify what evidence is MISSING.
 
 Return ONLY valid JSON:
 {
   "evidence_gaps": [
-    {
-      "missing": "what evidence is missing",
-      "why_needed": "why it is needed to answer"
-    }
+    {"missing": "what is missing", "why_needed": "why it is needed"}
   ],
   "resolution_evidence": [
-    {
-      "document": "specific document needed",
-      "reason": "how it would resolve the uncertainty"
-    }
+    {"document": "specific document needed", "reason": "how it would resolve"}
   ]
 }
 """
@@ -118,54 +86,28 @@ Return ONLY valid JSON:
 
 EVIDENCE_BATTLE_PROMPT = """You are an evidence investigator team.
 
-Given a question and evidence chunks, perform TWO independent investigations:
+Perform TWO independent investigations:
 
-🔵 INVESTIGATOR A (SUPPORTER):
-- Generate a candidate answer
-- Find ALL evidence that SUPPORTS this answer
-- Build the strongest possible case FOR the answer
+🔵 SUPPORTER: Find evidence that SUPPORTS the answer.
+🔴 SKEPTIC: Find evidence that CONTRADICTS or WEAKENS the answer.
 
-🔴 INVESTIGATOR B (SKEPTIC):
-- Challenge the candidate answer
-- Find ALL evidence that CONTRADICTS or WEAKENS it
-- Find what evidence is MISSING to verify the answer
-
-⚖️ RECONCILIATION:
-- Compare supporting vs contradicting evidence
-- Determine final verdict based on evidence weight
+⚖️ RECONCILE: Compare and decide.
 
 Return ONLY valid JSON:
 {
   "candidate_answer": "the proposed answer",
   "supporter": {
-    "claims": [
-      {
-        "claim": "supporting claim",
-        "source": "file name",
-        "page": "page number",
-        "strength": "strong/medium/weak"
-      }
-    ],
+    "claims": [{"claim": "claim", "source": "file", "page": "page", "strength": "strong/medium/weak"}],
     "total_claims": 0
   },
   "skeptic": {
-    "claims": [
-      {
-        "claim": "contradicting or challenging claim",
-        "source": "file name",
-        "page": "page number",
-        "impact": "high/medium/low",
-        "type": "contradiction/missing_evidence/weak_support"
-      }
-    ],
+    "claims": [{"claim": "claim", "source": "file", "page": "page", "impact": "high/medium/low", "type": "contradiction/missing_evidence/weak_support"}],
     "total_claims": 0,
-    "missing_evidence": [
-      "critical evidence that is missing"
-    ]
+    "missing_evidence": ["what is missing"]
   },
   "verdict": {
     "decision": "agree/conflict/insufficient",
-    "reasoning": "evidence-based reasoning",
+    "reasoning": "why",
     "supporting_count": 0,
     "counter_count": 0,
     "critical_missing": "most important missing evidence"
@@ -176,42 +118,19 @@ Return ONLY valid JSON:
 
 TEMPORAL_ANALYSIS_PROMPT = """You are a temporal reasoning expert.
 
-Given claims with dates/versions, determine if apparent conflicts are REAL conflicts or just TEMPORAL CHANGES.
+Determine if apparent conflicts are REAL conflicts or TEMPORAL CHANGES.
 
 RULES:
 - Different values at DIFFERENT times = NOT a conflict (progression)
 - Different values at the SAME time = REAL conflict
-- Value changes over time are EXPECTED (salary raise, policy update)
-- Only flag as conflict if values contradict at the same temporal context
 
 Return ONLY valid JSON:
 {
   "temporal_analysis": {
     "has_temporal_conflict": true/false,
-    "claims_timeline": [
-      {
-        "claim": "exact claim",
-        "value": "extracted value",
-        "temporal_context": "date/version/period",
-        "source": "file name",
-        "page": "page number"
-      }
-    ],
-    "real_conflicts": [
-      {
-        "claim_a": "claim 1",
-        "claim_b": "claim 2",
-        "reason": "why this is a REAL conflict (same time, different values)"
-      }
-    ],
-    "temporal_changes": [
-      {
-        "attribute": "what changed",
-        "from": "old value",
-        "to": "new value",
-        "reason": "progression/update"
-      }
-    ],
+    "claims_timeline": [{"claim": "claim", "value": "value", "temporal_context": "date", "source": "file", "page": "page"}],
+    "real_conflicts": [{"claim_a": "claim", "claim_b": "claim", "reason": "why"}],
+    "temporal_changes": [{"attribute": "attr", "from": "old", "to": "new", "reason": "why"}],
     "verdict": "conflict/temporal_progression/no_conflict",
     "explanation": "clear explanation"
   }
@@ -221,25 +140,15 @@ Return ONLY valid JSON:
 
 SOURCE_DRIFT_PROMPT = """You are a document version analyst.
 
-Given documents that may be different versions of the same source, detect changes between versions.
+Detect changes between document VERSIONS of the SAME source.
 
 Return ONLY valid JSON:
 {
   "source_drift": {
     "drift_detected": true/false,
-    "documents_compared": ["file1", "file2", "file3"],
-    "changes": [
-      {
-        "section": "section name or topic",
-        "old_value": "value in older version",
-        "new_value": "value in newer version",
-        "old_source": "file name",
-        "new_source": "file name",
-        "change_type": "addition/modification/removal",
-        "significance": "high/medium/low"
-      }
-    ],
-    "summary": "overall summary of changes"
+    "documents_compared": ["file1", "file2"],
+    "changes": [{"section": "section", "old_value": "old", "new_value": "new", "old_source": "file", "new_source": "file", "change_type": "addition/modification/removal", "significance": "high/medium/low"}],
+    "summary": "summary"
   }
 }
 """
@@ -247,33 +156,14 @@ Return ONLY valid JSON:
 
 CLAIM_DEPENDENCY_PROMPT = """You are a claim dependency analyst.
 
-Given a question and evidence chunks, build a dependency graph showing:
-- What claims are extracted
-- Which evidence supports/contradicts each claim
-- How claims relate to each other
+Build a dependency graph showing claims and their evidence.
 
 Return ONLY valid JSON:
 {
   "dependency_graph": {
     "question": "the question",
-    "claims": [
-      {
-        "id": "C1",
-        "claim": "exact claim text",
-        "confidence": "high/medium/low",
-        "supporting": [
-          {"source": "file", "page": "page", "snippet": "text"}
-        ],
-        "contradicting": [
-          {"source": "file", "page": "page", "snippet": "text"}
-        ]
-      }
-    ],
-    "final_answer": {
-      "claim_id": "C1",
-      "decision": "supported/contradicted/uncertain",
-      "reasoning": "why"
-    }
+    "claims": [{"id": "C1", "claim": "claim text", "confidence": "high/medium/low", "supporting": [{"source": "file", "page": "page", "snippet": "text"}], "contradicting": [{"source": "file", "page": "page", "snippet": "text"}]}],
+    "final_answer": {"claim_id": "C1", "decision": "supported/contradicted/uncertain", "reasoning": "why"}
   }
 }
 """
@@ -299,7 +189,7 @@ def extract_claims(chunk_text):
 
 def detect_conflict(chunks):
     all_claims = []
-    for c in chunks[:2]:
+    for c in chunks[:5]:
         claims_data = extract_claims(c["text"])
         for claim in claims_data.get("claims", []):
             all_claims.append({
@@ -346,8 +236,9 @@ def check_answerability(chunks, conflict_data, query):
             "reason": "Conflicting evidence found across documents"
         }
 
+    # FIX: Threshold 25 → 50
     avg_score = sum(c["score"] for c in chunks) / len(chunks)
-    if avg_score > 25.0:
+    if avg_score > 50.0:
         return {
             "level": "low_relevance",
             "label": "Low relevance",
@@ -422,11 +313,7 @@ def find_counter_evidence(query, chunks):
 Evidence:
 {context}
 
-Investigate thoroughly:
-1. What does the evidence suggest as a candidate answer?
-2. What evidence SUPPORTS it?
-3. What evidence CONTRADICTS it?
-4. Final decision."""
+Investigate thoroughly."""
 
     try:
         response = client.chat.completions.create(
@@ -458,21 +345,12 @@ def detect_evidence_gaps(query, chunks, conflict_data=None):
         for c in chunks[:6]
     ])
 
-    conflict_info = ""
-    if conflict_data and conflict_data.get("conflict"):
-        conflict_info = f"\n\nConflict detected: {json.dumps(conflict_data.get('pairs', []), indent=2)}"
-
     prompt = f"""Question: {query}
 
 Available Evidence:
 {context}
-{conflict_info}
 
-Identify:
-1. What evidence is MISSING to fully answer this question?
-2. What SPECIFIC document/record would resolve the uncertainty?
-
-If answer is complete, return empty lists."""
+What is MISSING to fully answer this question?"""
 
     try:
         response = client.chat.completions.create(
@@ -514,11 +392,7 @@ def run_evidence_battle(query, chunks):
 Evidence Pool:
 {context}
 
-Perform Evidence Battle:
-1. Generate candidate answer
-2. Supporter: find supporting evidence
-3. Skeptic: find contradicting + missing evidence
-4. Reconcile: final verdict"""
+Perform Evidence Battle."""
 
     try:
         response = client.chat.completions.create(
@@ -568,12 +442,7 @@ def analyze_temporal_conflicts(chunks):
 
 {context}
 
-Analyze whether apparent conflicts are TEMPORAL PROGRESSIONS or REAL CONFLICTS.
-Consider:
-- Dates mentioned
-- Document versions
-- Time periods
-- Sequential changes"""
+Analyze temporal vs real conflicts."""
 
     try:
         response = client.chat.completions.create(
@@ -626,6 +495,25 @@ def detect_source_drift(chunks):
             }
         }
 
+    # Check for version pattern
+    filenames = list(files.keys())
+    version_keywords = ["v1", "v2", "v3", "v4", "version", "old", "new", "draft", "final", "rev"]
+
+    has_version_pattern = any(
+        any(kw in fn.lower() for kw in version_keywords)
+        for fn in filenames
+    )
+
+    if not has_version_pattern:
+        return {
+            "source_drift": {
+                "drift_detected": False,
+                "documents_compared": filenames,
+                "changes": [],
+                "summary": "Documents appear to be different sources, not versions"
+            }
+        }
+
     context = "\n\n".join([
         f"[Document: {fname}]\n" + "\n".join(texts[:2])
         for fname, texts in files.items()
@@ -635,12 +523,7 @@ def detect_source_drift(chunks):
 
 {context}
 
-Detect changes between document versions.
-Look for:
-- Policy changes
-- Value updates
-- Section modifications
-- Version indicators"""
+Detect version changes."""
 
     try:
         response = client.chat.completions.create(
@@ -688,10 +571,7 @@ def build_claim_dependency_graph(query, chunks):
 Evidence:
 {context}
 
-Build a claim dependency graph:
-1. Extract main claims from evidence
-2. For each claim, identify supporting and contradicting evidence
-3. Determine final answer based on claim relationships"""
+Build claim dependency graph."""
 
     try:
         response = client.chat.completions.create(

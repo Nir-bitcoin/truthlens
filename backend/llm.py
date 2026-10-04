@@ -1,5 +1,5 @@
 # llm.py
-# Groq version — Direct target language + Strong prompt
+# Groq version — Direct target language
 
 import os
 from groq import Groq
@@ -35,7 +35,7 @@ def get_answer(query, chunks, target_lang=None):
     for i, c in enumerate(chunks[:5], 1):
         page = c.get("page", "?")
         context_parts.append(
-            f"[Source {i}: {c['file']}, Page {page}]\n{c['text'][:1200]}"
+            f"[Source {i}: {c['file']}, Page {page}]\n{c['text'][:1000]}"
         )
     context = "\n\n".join(context_parts)
 
@@ -46,24 +46,13 @@ CRITICAL LANGUAGE RULE:
 - Do NOT answer in any other language.
 
 OTHER RULES:
-1. You MUST find the answer in the provided context.
-2. The context HAS relevant information. Look carefully.
-3. Use ALL relevant information from the context.
-4. Every answer MUST cite: [Document Name, Page X]
-5. If context has PARTIAL answer, give what you can.
-6. ONLY say "Cannot determine reliably" if context is COMPLETELY unrelated.
-7. NEVER make up information.
-8. Be specific — give exact facts, numbers, dates, names.
-
-EXAMPLES:
-- Question: "What is the submission deadline?"
-  Context: "Final project submission: By 11:00 PM"
-  Answer: "The final submission deadline is 11:00 PM [Rule Book, Page 2]"
-
-- Question: "What is judging criteria?"
-  Context: "Functionality 30%, Technical 20%, Innovation 20%, UX 15%, Testing 15%"
-  Answer: "Judging criteria are: Functionality 30%, Technical 20%, Innovation 20%, UX 15%, Testing 15% [PS PDF, Page 40]"
+1. Answer ONLY from the provided context.
+2. Every answer MUST cite: [Document Name, Page X]
+3. If context doesn't have the answer, say: "Cannot determine reliably."
+4. NEVER make up information.
+5. Be specific — give exact facts.
 """
+
     prompt = f"""Context:
 {context}
 
@@ -76,7 +65,7 @@ Answer in {lang_name} with citations:"""
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt}
         ],
-        model="openai/gpt-oss-120b",
+        model="openai/gpt-oss-20b",
         temperature=0.5,
         max_tokens=1000,
     )

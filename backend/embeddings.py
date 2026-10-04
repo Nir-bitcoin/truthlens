@@ -1,25 +1,23 @@
 # embeddings.py
-# Kaam: Chunks + embeddings + FAISS index (STRONG MODEL)
+# Kaam: Chunks + embeddings + FAISS index
+# Fast mode with caching
 
+import streamlit as st
 from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
 import pickle
 import os
 
-# STRONG MODEL
-MODEL_NAME = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
-_model = None
+MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
 
+@st.cache_resource
 def get_model():
-    global _model
-    if _model is None:
-        _model = SentenceTransformer(MODEL_NAME)
-    return _model
+    return SentenceTransformer(MODEL_NAME)
 
 
-def chunk_text(text, chunk_size=500, overlap=50):
+def chunk_text(text, chunk_size=300, overlap=30):
     words = text.split()
     chunks = []
     for i in range(0, len(words), chunk_size - overlap):
