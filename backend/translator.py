@@ -1,8 +1,10 @@
 # translator.py
-# for: Multi-bhasha support — translate + language detect
+# Kaam: Multi-bhasha support — CACHED translation
 
 from deep_translator import GoogleTranslator
 from langdetect import detect, DetectorFactory
+import streamlit as st
+import time
 
 DetectorFactory.seed = 0
 
@@ -22,8 +24,8 @@ LANG_NAMES = {
 }
 
 
+@st.cache_data(ttl=3600)
 def detect_lang(text):
-    # Language detect karta hai
     try:
         return detect(text[:500])
     except Exception:
@@ -31,22 +33,43 @@ def detect_lang(text):
 
 
 def get_lang_name(code):
-    # Language code se naam deta hai
     return LANG_NAMES.get(code, code.upper())
 
 
-def translate(text, target_lang):
-    # Text ko target language mein translate karta hai
+@st.cache_data(ttl=3600)
+def _translate_cached(text, target_lang):
+    # Cached translation — same text dobara translate nahi hoga
     try:
-        return GoogleTranslator(source="auto", target=target_lang).translate(text)
+        result = GoogleTranslator(source="auto", target=target_lang).translate(text)
+        return result if result else text
     except Exception as e:
+        if "TooManyRequests" in str(e):
+            time.sleep(2)
+            try:
+                result = GoogleTranslator(source="auto", target=target_lang).translate(text)
+                return result if result else text
+            except Exception:
+                return text
         return text
 
 
-# Test karne ke liye
-if __name__ == "__main__":
-    text = "Employee joined in January 2024"
-    hindi = translate(text, "hi")
-    print(f"English: {text}")
-    print(f"Hindi: {hindi}")
-    print(f"Detected: {detect_lang(hindi)}")
+def translate(text, target_lang):
+    # Text ko target language mein translate karta hai (CACHED)
+    if not text or not target_lang:
+        return text
+
+    # Agar already same language hai to translate mat karo
+    try:
+        current = detect(text[:500])
+        if current == target_lang:
+            return text
+    except Exception:
+        pass
+
+    # Chhote chunks mein todo (Google Translate limit)
+    if len(text) > 4000:
+        parts = [text[i:i+4000] for i in range(0, len(text), 4000)]
+        translated = [_translate_cached(p, target_lang) for p in parts]
+        return " ".join(translated)
+    else:
+        return _translate_cached(text, target_lang)

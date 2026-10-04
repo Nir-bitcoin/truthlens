@@ -1,8 +1,7 @@
 # retrieval.py
-# for: Question ke liye top-k relevant chunks nikalna — page number ke saath
+# Kaam: Question ke liye top-k chunks nikalna (FAST)
 
 from embeddings import get_model, load_index
-import numpy as np
 
 
 def retrieve(query, top_k=5):
@@ -25,9 +24,3 @@ def retrieve(query, top_k=5):
         })
 
     return results
-
-
-if __name__ == "__main__":
-    results = retrieve("When did employee join?")
-    for r in results:
-        print(f"[{r['file']} Page {r['page']}] {r['text'][:100]}...")

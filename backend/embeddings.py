@@ -1,6 +1,5 @@
 # embeddings.py
-# Kaam: Text ko chunks mein todna + embed karna + FAISS index banana
-# Page numbers preserve karta hai
+# Kaam: Chunks + embeddings + FAISS index (STRONG MODEL)
 
 from sentence_transformers import SentenceTransformer
 import faiss
@@ -8,7 +7,8 @@ import numpy as np
 import pickle
 import os
 
-MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+# STRONG MODEL
+MODEL_NAME = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
 _model = None
 
 
@@ -31,7 +31,7 @@ def chunk_text(text, chunk_size=500, overlap=50):
 
 def embed_chunks(chunks):
     model = get_model()
-    embeddings = model.encode(chunks, show_progress_bar=False)
+    embeddings = model.encode(chunks, batch_size=32, show_progress_bar=False)
     return np.array(embeddings).astype("float32")
 
 
@@ -57,8 +57,6 @@ def load_index(path="data/index"):
 
 
 def process_documents(documents):
-    # Full pipeline: docs → chunks → embeddings → index
-    # Har chunk ke saath page number preserve karta hai
     all_chunks = []
     all_metadata = []
 
