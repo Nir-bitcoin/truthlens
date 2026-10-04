@@ -16,16 +16,9 @@
 
 **⭐ Star the repo if TruthLens helped you find the truth!**
 
-</div>
+<img src="docs/truthlens-hero.svg" alt="TruthLens: Ask, Retrieve, Compare, Answer" width="100%">
 
-```
-      ______              ______              ______              ______
-     /      /|           /      /|           /      /|           /      /|
-    /______/ |          /______/ |          /______/ |          /______/ |
-    |  ?   | /          |  +-  | /          |  !=  | /          |  ok  | /
-    |______|/           |______|/           |______|/           |______|/
-        Ask               Retrieve            Compare              Answer
-```
+</div>
 
 ---
 
@@ -146,21 +139,7 @@ TruthLens has **39 features** in total: 7 core, 13 advanced, 8 technical, and 11
 
 ### 🔴 Core Features
 
-```
-      ______            ______            ______            ______
-     /      /|         /      /|         /      /|         /      /|
-    /______/ |        /______/ |        /______/ |        /______/ |
-    |  01  | /        |  02  | /        |  03  | /        |  04  | /
-    |______|/         |______|/         |______|/         |______|/
-   Multi-format     Multi-document   Extract + index   Natural-lang Q&A
-
-      ______            ______            ______
-     /      /|         /      /|         /      /|
-    /______/ |        /______/ |        /______/ |
-    |  05  | /        |  06  | /        |  07  | /
-    |______|/         |______|/         |______|/
- Source citations  Conflict detect     Uncertainty
-```
+<img src="docs/features-core.svg" alt="Core features" width="100%">
 
 | # | Feature | File | Status |
 |:---:|:---|:---|:---:|
@@ -174,35 +153,7 @@ TruthLens has **39 features** in total: 7 core, 13 advanced, 8 technical, and 11
 
 ### 🟠 Advanced Features
 
-```
-      ______            ______            ______            ______
-     /      /|         /      /|         /      /|         /      /|
-    /______/ |        /______/ |        /______/ |        /______/ |
-    |  08  | /        |  09  | /        |  10  | /        |  11  | /
-    |______|/         |______|/         |______|/         |______|/
- Counter-Evidence    Evidence Gap    Resolution Evid.  Evidence Battle
-
-      ______            ______            ______            ______
-     /      /|         /      /|         /      /|         /      /|
-    /______/ |        /______/ |        /______/ |        /______/ |
-    |  12  | /        |  13  | /        |  14  | /        |  15  | /
-    |______|/         |______|/         |______|/         |______|/
- Confidence Score   Evidence Chain    Conflict Graph   Halluc. Firewall
-
-      ______            ______            ______            ______
-     /      /|         /      /|         /      /|         /      /|
-    /______/ |        /______/ |        /______/ |        /______/ |
-    |  16  | /        |  17  | /        |  18  | /        |  19  | /
-    |______|/         |______|/         |______|/         |______|/
-Empty-State Guard   Cross-Lingual      Auto-Process    Claim Extraction
-
-      ______
-     /      /|
-    /______/ |
-    |  20  | /
-    |______|/
-  Answerability
-```
+<img src="docs/features-advanced.svg" alt="Advanced features" width="100%">
 
 | # | Feature | File | Status |
 |:---:|:---|:---|:---:|
@@ -222,21 +173,7 @@ Empty-State Guard   Cross-Lingual      Auto-Process    Claim Extraction
 
 ### 🟡 Technical Features
 
-```
-      ______            ______            ______            ______
-     /      /|         /      /|         /      /|         /      /|
-    /______/ |        /______/ |        /______/ |        /______/ |
-    |  21  | /        |  22  | /        |  23  | /        |  24  | /
-    |______|/         |______|/         |______|/         |______|/
-     Groq API        gpt-oss-120b   Strong embeddings  Top-30 retrieval
-
-      ______            ______            ______            ______
-     /      /|         /      /|         /      /|         /      /|
-    /______/ |        /______/ |        /______/ |        /______/ |
-    |  25  | /        |  26  | /        |  27  | /        |  28  | /
-    |______|/         |______|/         |______|/         |______|/
- Query translate     OCR support       Page numbers        Caching
-```
+<img src="docs/features-technical.svg" alt="Technical features" width="100%">
 
 | # | Feature | File | Status |
 |:---:|:---|:---|:---:|
@@ -251,28 +188,7 @@ Empty-State Guard   Cross-Lingual      Auto-Process    Claim Extraction
 
 ### 🌍 Language Support
 
-```
-      ______            ______            ______            ______
-     /      /|         /      /|         /      /|         /      /|
-    /______/ |        /______/ |        /______/ |        /______/ |
-    |  en  | /        |  hi  | /        |  mr  | /        |  ta  | /
-    |______|/         |______|/         |______|/         |______|/
-     English            Hindi            Marathi            Tamil
-
-      ______            ______            ______            ______
-     /      /|         /      /|         /      /|         /      /|
-    /______/ |        /______/ |        /______/ |        /______/ |
-    |  bn  | /        |  te  | /        |  gu  | /        |  kn  | /
-    |______|/         |______|/         |______|/         |______|/
-     Bengali            Telugu           Gujarati          Kannada
-
-      ______            ______            ______
-     /      /|         /      /|         /      /|
-    /______/ |        /______/ |        /______/ |
-    |  ml  | /        |  pa  | /        |  ur  | /
-    |______|/         |______|/         |______|/
-    Malayalam          Punjabi             Urdu
-```
+<img src="docs/languages.svg" alt="Supported languages" width="100%">
 
 <div align="center">
 
@@ -592,7 +508,7 @@ MIT License. See [LICENSE](LICENSE) for details.
 
 ### ⭐ Star this repo if you found it useful!
 
-
+**Built with ❤️ for ALGOTHON'26**
 
 *Don't just get answers. Get truth.*
 
