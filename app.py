@@ -20,10 +20,13 @@ from conflict import (
     calculate_evidence_confidence,
     find_counter_evidence,
     detect_evidence_gaps,
-    run_evidence_battle
+    run_evidence_battle,
+    analyze_temporal_conflicts,
+    detect_source_drift,
+    build_claim_dependency_graph
 )
 from translator import detect_lang, get_lang_name, translate
-from graph import build_conflict_graph
+from graph import build_conflict_graph, build_dependency_graph_figure
 
 load_dotenv()
 
@@ -45,6 +48,8 @@ st.markdown("""
     .gap-box { background-color: #fff3cd; border-left: 5px solid #ffc107; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
     .supporter-box { background-color: #d4edda; border-left: 5px solid #28a745; padding: 1rem; border-radius: 8px; }
     .skeptic-box { background-color: #f8d7da; border-left: 5px solid #dc3545; padding: 1rem; border-radius: 8px; }
+    .temporal-box { background-color: #d1ecf1; border-left: 5px solid #17a2b8; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+    .drift-box { background-color: #fff3cd; border-left: 5px solid #ffc107; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
     .strong { color: #28a745; font-weight: bold; }
     .moderate { color: #ffc107; font-weight: bold; }
     .weak { color: #dc3545; font-weight: bold; }
@@ -169,7 +174,7 @@ st.header("💬 Ask a Question")
 
 query = st.text_input(
     "Apna sawaal likho (kisi bhi bhasha mein):",
-    placeholder="Example: What is the submission deadline?"
+    placeholder="Example: Was the employee eligible for promotion?"
 )
 
 if st.button("🔍 Investigate") and query:
@@ -200,12 +205,13 @@ if st.button("🔍 Investigate") and query:
         answerability = check_answerability(chunks, conflict_data, query)
         confidence = calculate_evidence_confidence(chunks, conflict_data)
 
-        # Counter-Evidence 2.0
+        # All investigation features
         counter_evidence = find_counter_evidence(query, chunks)
-        # Evidence Gap + Resolution
         gap_data = detect_evidence_gaps(query, chunks, conflict_data)
-        # Evidence Battle
         evidence_battle = run_evidence_battle(query, chunks)
+        temporal_analysis = analyze_temporal_conflicts(chunks)
+        source_drift = detect_source_drift(chunks)
+        dependency_graph = build_claim_dependency_graph(query, chunks)
 
         target = lang_map[answer_lang]
         if answerability["level"] in ["strong", "moderate"]:
@@ -213,6 +219,7 @@ if st.button("🔍 Investigate") and query:
         else:
             answer = "🤷 Cannot determine reliably. " + answerability["reason"]
 
+    # ---------------- CONFLICT DISPLAY ----------------
     if conflict_data.get("conflict"):
         st.markdown('<div class="conflict-box">', unsafe_allow_html=True)
         st.markdown("### ⚠️ CONFLICT DETECTED")
@@ -224,6 +231,7 @@ if st.button("🔍 Investigate") and query:
             """)
         st.markdown('</div>', unsafe_allow_html=True)
 
+    # ---------------- ANSWER ----------------
     st.markdown('<div class="answer-box">', unsafe_allow_html=True)
     st.markdown("### 📝 Answer")
     st.write(answer)
@@ -246,7 +254,102 @@ if st.button("🔍 Investigate") and query:
     col2.metric("Agreement", f"{confidence['agreement']}%")
     col3.metric("Conflict Penalty", confidence["penalty"])
 
-    # ⚖️ EVIDENCE BATTLE DISPLAY
+    # ---------------- TEMPORAL TRUTH ENGINE ----------------
+    if temporal_analysis.get("temporal_analysis"):
+        ta = temporal_analysis["temporal_analysis"]
+        verdict = ta.get("verdict", "no_conflict")
+
+        if verdict == "temporal_progression":
+            st.markdown('<div class="temporal-box">', unsafe_allow_html=True)
+            st.markdown("### ⏳ Temporal Progression Detected")
+            st.info("The apparent conflict is a **time-based change**, not a contradiction.")
+
+            changes = ta.get("temporal_changes", [])
+            if changes:
+                st.markdown("**What changed over time:**")
+                for change in changes:
+                    st.markdown(f"""
+- **{change.get('attribute', '')}**
+  - From: `{change.get('from', '')}`
+  - To: `{change.get('to', '')}`
+  - Reason: *{change.get('reason', '')}*
+                    """)
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        elif verdict == "conflict":
+            st.markdown('<div class="temporal-box">', unsafe_allow_html=True)
+            st.markdown("### ⚠️ Real Temporal Conflict")
+            st.warning("Same-time contradiction detected.")
+            conflicts = ta.get("real_conflicts", [])
+            for c in conflicts:
+                st.markdown(f"""
+- **{c.get('claim_a', '')}** vs **{c.get('claim_b', '')}**
+  - *{c.get('reason', '')}*
+                """)
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        timeline = ta.get("claims_timeline", [])
+        if timeline:
+            with st.expander("📅 Claims Timeline"):
+                for item in timeline:
+                    st.markdown(f"""
+- **{item.get('temporal_context', '?')}**: {item.get('value', '')}
+  - *{item.get('claim', '')}*
+  - Source: {item.get('source', '')} (Page {item.get('page', '?')})
+                    """)
+
+    # ---------------- SOURCE DRIFT DETECTION ----------------
+    if source_drift.get("source_drift"):
+        sd = source_drift["source_drift"]
+        if sd.get("drift_detected"):
+            st.markdown('<div class="drift-box">', unsafe_allow_html=True)
+            st.markdown("### 📑 Source Drift Detected")
+            st.warning(f"Changes found across {len(sd.get('documents_compared', []))} documents")
+
+            st.markdown(f"**Documents compared:** {', '.join(sd.get('documents_compared', []))}")
+
+            changes = sd.get("changes", [])
+            if changes:
+                st.markdown("**Changes detected:**")
+                for change in changes:
+                    sig = change.get("significance", "medium")
+                    emoji = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(sig, "🟡")
+                    st.markdown(f"""
+{emoji} **{change.get('section', '')}** ({change.get('change_type', '')})
+- Old: `{change.get('old_value', '')}` — *{change.get('old_source', '')}*
+- New: `{change.get('new_value', '')}` — *{change.get('new_source', '')}*
+                    """)
+
+            st.caption(sd.get("summary", ""))
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    # ---------------- CLAIM DEPENDENCY GRAPH ----------------
+    if dependency_graph.get("dependency_graph"):
+        dg = dependency_graph["dependency_graph"]
+        if dg.get("claims"):
+            st.markdown("### 🔗 Claim Dependency Graph")
+
+            fig = build_dependency_graph_figure(dg)
+            if fig:
+                st.plotly_chart(fig, use_container_width=True)
+
+            final = dg.get("final_answer", {})
+            decision = final.get("decision", "uncertain")
+            emoji = {"supported": "✅", "contradicted": "⚠️", "uncertain": "🟡"}.get(decision, "🟡")
+
+            st.markdown(f"### {emoji} Final Decision: **{decision.upper()}**")
+            st.caption(final.get("reasoning", ""))
+
+            with st.expander("📋 All Claims"):
+                for claim in dg.get("claims", []):
+                    st.markdown(f"""
+**{claim.get('id', 'C')}: {claim.get('claim', '')}**
+- Confidence: {claim.get('confidence', 'medium')}
+- Supporting: {len(claim.get('supporting', []))} sources
+- Contradicting: {len(claim.get('contradicting', []))} sources
+                    """)
+
+    # ---------------- EVIDENCE BATTLE ----------------
     if evidence_battle.get("candidate_answer"):
         st.markdown("---")
         st.markdown("### ⚖️ Evidence Battle")
@@ -317,10 +420,9 @@ if st.button("🔍 Investigate") and query:
         col1.metric("Supporting", verdict.get("supporting_count", 0))
         col2.metric("Counter", verdict.get("counter_count", 0))
         col3.metric("Critical Missing", verdict.get("critical_missing", "—"))
-
         st.markdown("---")
 
-    # Evidence Gap Display
+    # ---------------- EVIDENCE GAP ----------------
     if answerability["level"] in ["cannot_determine", "low_relevance", "no_evidence"]:
         gaps = gap_data.get("evidence_gaps", [])
         resolutions = gap_data.get("resolution_evidence", [])
@@ -347,6 +449,7 @@ if st.button("🔍 Investigate") and query:
 
             st.markdown('</div>', unsafe_allow_html=True)
 
+    # ---------------- EVIDENCE CHAIN ----------------
     with st.expander("🔗 Evidence Chain", expanded=True):
         sources = set(c["file"] for c in chunks)
         st.markdown(f"""
@@ -369,6 +472,7 @@ if st.button("🔍 Investigate") and query:
 **Answerability:** {answerability['label']}
         """)
 
+    # ---------------- CITATIONS ----------------
     st.markdown("### 📌 Citations")
     for i, c in enumerate(chunks, 1):
         st.markdown(
@@ -380,6 +484,7 @@ if st.button("🔍 Investigate") and query:
             unsafe_allow_html=True
         )
 
+    # ---------------- CONFLICT GRAPH ----------------
     if conflict_data.get("conflict"):
         with st.expander("🕸️ Conflict Graph"):
             fig = build_conflict_graph(conflict_data)

@@ -1,6 +1,7 @@
 # conflict.py
 # Kaam: Claim extraction + conflict detection + answerability + confidence
-# + Counter-Evidence 2.0 + Evidence Gap Detector + Resolution Evidence
+# + Counter-Evidence 2.0 + Evidence Gap + Resolution + Evidence Battle
+# + Temporal Truth Engine + Source Drift Detection + Claim Dependency Graph
 
 import os
 import json
@@ -11,6 +12,8 @@ load_dotenv()
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
+
+# ---------------- PROMPTS ----------------
 
 CLAIM_PROMPT = """Extract factual claims from this text.
 
@@ -49,7 +52,6 @@ CRITICAL RULES:
 1. Extract EXACT numbers, dates, and facts from the evidence.
 2. Do NOT change or swap values.
 3. Candidate answer must be COPY-PASTED from evidence, not paraphrased.
-4. If evidence says 30%, write 30% — not 20% or 15%.
 
 Given a question and evidence chunks:
 
@@ -113,6 +115,171 @@ Return ONLY valid JSON:
 }
 """
 
+
+EVIDENCE_BATTLE_PROMPT = """You are an evidence investigator team.
+
+Given a question and evidence chunks, perform TWO independent investigations:
+
+🔵 INVESTIGATOR A (SUPPORTER):
+- Generate a candidate answer
+- Find ALL evidence that SUPPORTS this answer
+- Build the strongest possible case FOR the answer
+
+🔴 INVESTIGATOR B (SKEPTIC):
+- Challenge the candidate answer
+- Find ALL evidence that CONTRADICTS or WEAKENS it
+- Find what evidence is MISSING to verify the answer
+
+⚖️ RECONCILIATION:
+- Compare supporting vs contradicting evidence
+- Determine final verdict based on evidence weight
+
+Return ONLY valid JSON:
+{
+  "candidate_answer": "the proposed answer",
+  "supporter": {
+    "claims": [
+      {
+        "claim": "supporting claim",
+        "source": "file name",
+        "page": "page number",
+        "strength": "strong/medium/weak"
+      }
+    ],
+    "total_claims": 0
+  },
+  "skeptic": {
+    "claims": [
+      {
+        "claim": "contradicting or challenging claim",
+        "source": "file name",
+        "page": "page number",
+        "impact": "high/medium/low",
+        "type": "contradiction/missing_evidence/weak_support"
+      }
+    ],
+    "total_claims": 0,
+    "missing_evidence": [
+      "critical evidence that is missing"
+    ]
+  },
+  "verdict": {
+    "decision": "agree/conflict/insufficient",
+    "reasoning": "evidence-based reasoning",
+    "supporting_count": 0,
+    "counter_count": 0,
+    "critical_missing": "most important missing evidence"
+  }
+}
+"""
+
+
+TEMPORAL_ANALYSIS_PROMPT = """You are a temporal reasoning expert.
+
+Given claims with dates/versions, determine if apparent conflicts are REAL conflicts or just TEMPORAL CHANGES.
+
+RULES:
+- Different values at DIFFERENT times = NOT a conflict (progression)
+- Different values at the SAME time = REAL conflict
+- Value changes over time are EXPECTED (salary raise, policy update)
+- Only flag as conflict if values contradict at the same temporal context
+
+Return ONLY valid JSON:
+{
+  "temporal_analysis": {
+    "has_temporal_conflict": true/false,
+    "claims_timeline": [
+      {
+        "claim": "exact claim",
+        "value": "extracted value",
+        "temporal_context": "date/version/period",
+        "source": "file name",
+        "page": "page number"
+      }
+    ],
+    "real_conflicts": [
+      {
+        "claim_a": "claim 1",
+        "claim_b": "claim 2",
+        "reason": "why this is a REAL conflict (same time, different values)"
+      }
+    ],
+    "temporal_changes": [
+      {
+        "attribute": "what changed",
+        "from": "old value",
+        "to": "new value",
+        "reason": "progression/update"
+      }
+    ],
+    "verdict": "conflict/temporal_progression/no_conflict",
+    "explanation": "clear explanation"
+  }
+}
+"""
+
+
+SOURCE_DRIFT_PROMPT = """You are a document version analyst.
+
+Given documents that may be different versions of the same source, detect changes between versions.
+
+Return ONLY valid JSON:
+{
+  "source_drift": {
+    "drift_detected": true/false,
+    "documents_compared": ["file1", "file2", "file3"],
+    "changes": [
+      {
+        "section": "section name or topic",
+        "old_value": "value in older version",
+        "new_value": "value in newer version",
+        "old_source": "file name",
+        "new_source": "file name",
+        "change_type": "addition/modification/removal",
+        "significance": "high/medium/low"
+      }
+    ],
+    "summary": "overall summary of changes"
+  }
+}
+"""
+
+
+CLAIM_DEPENDENCY_PROMPT = """You are a claim dependency analyst.
+
+Given a question and evidence chunks, build a dependency graph showing:
+- What claims are extracted
+- Which evidence supports/contradicts each claim
+- How claims relate to each other
+
+Return ONLY valid JSON:
+{
+  "dependency_graph": {
+    "question": "the question",
+    "claims": [
+      {
+        "id": "C1",
+        "claim": "exact claim text",
+        "confidence": "high/medium/low",
+        "supporting": [
+          {"source": "file", "page": "page", "snippet": "text"}
+        ],
+        "contradicting": [
+          {"source": "file", "page": "page", "snippet": "text"}
+        ]
+      }
+    ],
+    "final_answer": {
+      "claim_id": "C1",
+      "decision": "supported/contradicted/uncertain",
+      "reasoning": "why"
+    }
+  }
+}
+"""
+
+
+# ---------------- FUNCTIONS ----------------
 
 def extract_claims(chunk_text):
     try:
@@ -236,7 +403,6 @@ def calculate_evidence_confidence(chunks, conflict_data):
 
 
 def find_counter_evidence(query, chunks):
-    # Counter-Evidence 2.0 — Supporting + Contradicting compare
     if not chunks:
         return {
             "candidate_answer": "",
@@ -284,7 +450,6 @@ Investigate thoroughly:
 
 
 def detect_evidence_gaps(query, chunks, conflict_data=None):
-    # Evidence Gap + Resolution Evidence
     if not chunks:
         return {"evidence_gaps": [], "resolution_evidence": []}
 
@@ -322,67 +487,9 @@ If answer is complete, return empty lists."""
         return json.loads(response.choices[0].message.content)
     except Exception:
         return {"evidence_gaps": [], "resolution_evidence": []}
-EVIDENCE_BATTLE_PROMPT = """You are an evidence investigator team.
-
-Given a question and evidence chunks, perform TWO independent investigations:
-
-🔵 INVESTIGATOR A (SUPPORTER):
-- Generate a candidate answer
-- Find ALL evidence that SUPPORTS this answer
-- Build the strongest possible case FOR the answer
-
-🔴 INVESTIGATOR B (SKEPTIC):
-- Challenge the candidate answer
-- Find ALL evidence that CONTRADICTS or WEAKENS it
-- Find what evidence is MISSING to verify the answer
-
-⚖️ RECONCILIATION:
-- Compare supporting vs contradicting evidence
-- Determine final verdict based on evidence weight
-- Do NOT let one LLM overpower the other
-
-Return ONLY valid JSON:
-{
-  "candidate_answer": "the proposed answer",
-  "supporter": {
-    "claims": [
-      {
-        "claim": "supporting claim",
-        "source": "file name",
-        "page": "page number",
-        "strength": "strong/medium/weak"
-      }
-    ],
-    "total_claims": 0
-  },
-  "skeptic": {
-    "claims": [
-      {
-        "claim": "contradicting or challenging claim",
-        "source": "file name",
-        "page": "page number",
-        "impact": "high/medium/low",
-        "type": "contradiction/missing_evidence/weak_support"
-      }
-    ],
-    "total_claims": 0,
-    "missing_evidence": [
-      "critical evidence that is missing"
-    ]
-  },
-  "verdict": {
-    "decision": "agree/conflict/insufficient",
-    "reasoning": "evidence-based reasoning",
-    "supporting_count": 0,
-    "counter_count": 0,
-    "critical_missing": "most important missing evidence"
-  }
-}
-"""
 
 
 def run_evidence_battle(query, chunks):
-    # Evidence Battle — AI vs AI Investigation
     if not chunks:
         return {
             "candidate_answer": "",
@@ -435,5 +542,177 @@ Perform Evidence Battle:
                 "supporting_count": 0,
                 "counter_count": 0,
                 "critical_missing": "Unknown"
+            }
+        }
+
+
+def analyze_temporal_conflicts(chunks):
+    if not chunks:
+        return {
+            "temporal_analysis": {
+                "has_temporal_conflict": False,
+                "claims_timeline": [],
+                "real_conflicts": [],
+                "temporal_changes": [],
+                "verdict": "no_conflict",
+                "explanation": "No evidence available"
+            }
+        }
+
+    context = "\n\n".join([
+        f"[Source: {c['file']}, Page {c.get('page', '?')}]\n{c['text'][:600]}"
+        for c in chunks[:6]
+    ])
+
+    prompt = f"""Evidence with potential conflicts:
+
+{context}
+
+Analyze whether apparent conflicts are TEMPORAL PROGRESSIONS or REAL CONFLICTS.
+Consider:
+- Dates mentioned
+- Document versions
+- Time periods
+- Sequential changes"""
+
+    try:
+        response = client.chat.completions.create(
+            model="openai/gpt-oss-120b",
+            messages=[
+                {"role": "system", "content": TEMPORAL_ANALYSIS_PROMPT},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2,
+            response_format={"type": "json_object"}
+        )
+        return json.loads(response.choices[0].message.content)
+    except Exception:
+        return {
+            "temporal_analysis": {
+                "has_temporal_conflict": False,
+                "claims_timeline": [],
+                "real_conflicts": [],
+                "temporal_changes": [],
+                "verdict": "no_conflict",
+                "explanation": "Analysis failed"
+            }
+        }
+
+
+def detect_source_drift(chunks):
+    if len(chunks) < 2:
+        return {
+            "source_drift": {
+                "drift_detected": False,
+                "documents_compared": [],
+                "changes": [],
+                "summary": "Not enough documents to compare"
+            }
+        }
+
+    files = {}
+    for c in chunks:
+        if c["file"] not in files:
+            files[c["file"]] = []
+        files[c["file"]].append(c["text"])
+
+    if len(files) < 2:
+        return {
+            "source_drift": {
+                "drift_detected": False,
+                "documents_compared": list(files.keys()),
+                "changes": [],
+                "summary": "Only one unique source found"
+            }
+        }
+
+    context = "\n\n".join([
+        f"[Document: {fname}]\n" + "\n".join(texts[:2])
+        for fname, texts in files.items()
+    ])
+
+    prompt = f"""Documents to compare:
+
+{context}
+
+Detect changes between document versions.
+Look for:
+- Policy changes
+- Value updates
+- Section modifications
+- Version indicators"""
+
+    try:
+        response = client.chat.completions.create(
+            model="openai/gpt-oss-120b",
+            messages=[
+                {"role": "system", "content": SOURCE_DRIFT_PROMPT},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2,
+            response_format={"type": "json_object"}
+        )
+        return json.loads(response.choices[0].message.content)
+    except Exception:
+        return {
+            "source_drift": {
+                "drift_detected": False,
+                "documents_compared": [],
+                "changes": [],
+                "summary": "Analysis failed"
+            }
+        }
+
+
+def build_claim_dependency_graph(query, chunks):
+    if not chunks:
+        return {
+            "dependency_graph": {
+                "question": query,
+                "claims": [],
+                "final_answer": {
+                    "claim_id": "",
+                    "decision": "uncertain",
+                    "reasoning": "No evidence"
+                }
+            }
+        }
+
+    context = "\n\n".join([
+        f"[Source: {c['file']}, Page {c.get('page', '?')}]\n{c['text'][:500]}"
+        for c in chunks[:6]
+    ])
+
+    prompt = f"""Question: {query}
+
+Evidence:
+{context}
+
+Build a claim dependency graph:
+1. Extract main claims from evidence
+2. For each claim, identify supporting and contradicting evidence
+3. Determine final answer based on claim relationships"""
+
+    try:
+        response = client.chat.completions.create(
+            model="openai/gpt-oss-120b",
+            messages=[
+                {"role": "system", "content": CLAIM_DEPENDENCY_PROMPT},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2,
+            response_format={"type": "json_object"}
+        )
+        return json.loads(response.choices[0].message.content)
+    except Exception:
+        return {
+            "dependency_graph": {
+                "question": query,
+                "claims": [],
+                "final_answer": {
+                    "claim_id": "",
+                    "decision": "uncertain",
+                    "reasoning": "Analysis failed"
+                }
             }
         }
