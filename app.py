@@ -1,16 +1,21 @@
 # app.py
 # TruthLens — AI Document Investigator
-# Dark Theme + Fast Mode
+# Professional dashboard UI for Streamlit
 
-import streamlit as st
+import html
 import os
 import sys
-import time
+from urllib.parse import urlparse
+
+import streamlit as st
 from dotenv import load_dotenv
 
 sys.path.append("backend")
 sys.path.append("utils")
 
+# ============================================
+# BACKEND IMPORTS
+# ============================================
 from parser import parse_document
 from embeddings import process_documents
 from retrieval import retrieve
@@ -24,10 +29,18 @@ from conflict import (
     run_evidence_battle,
     analyze_temporal_conflicts,
     detect_source_drift,
-    build_claim_dependency_graph
+    build_claim_dependency_graph,
 )
 from translator import detect_lang, get_lang_name, translate
 from graph import build_conflict_graph, build_dependency_graph_figure
+
+# Investigation pipeline
+from investigation_pipeline import run_full_investigation
+from verdict_engine import get_kpi_cards
+from eeg_engine import get_eeg_kpis
+from independence_engine import get_independence_kpis
+from cee_engine import get_cee_kpis
+from serpapi_evidence import get_serpapi_kpis
 
 load_dotenv()
 
@@ -35,371 +48,501 @@ st.set_page_config(
     page_title="TruthLens — AI Document Investigator",
     page_icon="🔍",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
 # ============================================
-# DARK THEME + ANIMATED CSS
+# STYLES
 # ============================================
-st.markdown("""
+STYLES = """
 <style>
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-    @keyframes slideInLeft {
-        from { opacity: 0; transform: translateX(-40px); }
-        to { opacity: 1; transform: translateX(0); }
-    }
-    @keyframes pulseGlow {
-        0% { box-shadow: 0 0 0 0 rgba(107, 155, 209, 0.4); }
-        50% { box-shadow: 0 0 0 15px rgba(107, 155, 209, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(107, 155, 209, 0); }
-    }
-    @keyframes float {
-        0% { transform: translateY(0px) rotate(0deg); }
-        50% { transform: translateY(-10px) rotate(3deg); }
-        100% { transform: translateY(0px) rotate(0deg); }
-    }
-    @keyframes gradientShift {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap');
 
-    .stApp {
-        background: linear-gradient(-45deg, #0f141b, #131a24, #0f141b, #171e28);
-        background-size: 400% 400%;
-        animation: gradientShift 20s ease infinite;
-    }
+:root {
+    --ink: #0d131d;
+    --surface: #141c2a;
+    --surface-2: #1a2436;
+    --surface-3: #212d44;
+    --line: #2a3850;
+    --text: #e6ebf3;
+    --muted: #8b98ad;
+    --faint: #66738a;
+    --accent: #5aaee6;
+    --accent-dim: #2c5f8a;
+    --ok: #3fb68b;
+    --warn: #e2a63c;
+    --bad: #e5675f;
+    --serif: 'Source Serif 4', Georgia, serif;
+    --sans: 'IBM Plex Sans', -apple-system, 'Segoe UI', sans-serif;
+}
 
-    #MainMenu { visibility: hidden; }
-    footer { visibility: hidden; }
-    header { visibility: hidden; }
+/* ---------- App shell ---------- */
+.stApp {
+    background:
+        radial-gradient(1200px 500px at 15% -10%, rgba(90, 174, 230, 0.07), transparent 60%),
+        var(--ink);
+    font-family: var(--sans);
+    color: var(--text);
+}
+#MainMenu, footer { visibility: hidden; }
+header[data-testid="stHeader"] { background: transparent; }
+.block-container { padding-top: 2rem; max-width: 1280px; }
 
-    .tl-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 1.2rem 1.6rem;
-        border-radius: 16px;
-        background: rgba(23, 30, 40, 0.75);
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(107, 155, 209, 0.15);
-        margin-bottom: 1.5rem;
-        animation: fadeInUp 0.6s ease-out;
-    }
-    .tl-title {
-        font-size: 1.9rem;
-        font-weight: 800;
-        background: linear-gradient(135deg, #6b9bd1, #8bb4de, #5a8ab8);
-        background-size: 200% 200%;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        animation: gradientShift 5s ease infinite;
-        display: inline-block;
-        margin: 0;
-    }
-    .tl-logo {
-        display: inline-block;
-        animation: float 3s ease-in-out infinite;
-        margin-right: 0.6rem;
-        -webkit-text-fill-color: initial;
-    }
-    .tl-sub {
-        color: #9ca3af;
-        font-size: 0.95rem;
-        margin-top: 0.3rem;
-    }
-    .tl-chip {
-        display: inline-block;
-        padding: 0.4rem 1rem;
-        border-radius: 999px;
-        font-size: 0.82rem;
-        font-weight: 600;
-        background: rgba(107, 155, 209, 0.12);
-        color: #8bb4de;
-        border: 1px solid rgba(107, 155, 209, 0.3);
-        animation: fadeIn 1s ease-in;
-    }
-    .tl-chip.ok {
-        background: rgba(74, 222, 128, 0.12);
-        color: #6ee7a7;
-        border-color: rgba(74, 222, 128, 0.3);
-    }
+html, body, [class*="st-"], .stMarkdown, p, li, label {
+    font-family: var(--sans);
+}
+h1, h2, h3, h4 { font-family: var(--serif); color: var(--text); letter-spacing: -0.01em; }
+h3 { font-size: 1.35rem; }
+h4 { font-size: 1.1rem; }
 
-    .verdict-banner {
-        padding: 1.6rem;
-        border-radius: 16px;
-        margin: 1rem 0;
-        text-align: center;
-        animation: fadeInUp 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
-        transition: all 0.3s ease;
-    }
-    .verdict-banner:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 15px 40px rgba(0,0,0,0.4);
-    }
-    .verdict-supported {
-        background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.08));
-        border: 2px solid #4ade80;
-        animation: pulseGlow 3s infinite, fadeInUp 0.7s;
-    }
-    .verdict-conflict {
-        background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.08));
-        border: 2px solid #fbbf24;
-        animation: pulseGlow 3s infinite, fadeInUp 0.7s;
-    }
-    .verdict-insufficient {
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.08));
-        border: 2px solid #f87171;
-        animation: pulseGlow 3s infinite, fadeInUp 0.7s;
-    }
-    .verdict-title {
-        font-size: 1.7rem;
-        font-weight: 800;
-        margin: 0;
-        color: #f3f4f6;
-    }
-    .verdict-subtitle {
-        font-size: 1rem;
-        color: #9ca3af;
-        margin-top: 0.5rem;
-    }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-    .tl-card {
-        background: rgba(23, 30, 40, 0.7);
-        backdrop-filter: blur(15px);
-        border-radius: 14px;
-        padding: 1.2rem;
-        margin: 0.6rem 0;
-        border-left: 4px solid #6b9bd1;
-        animation: fadeInUp 0.5s ease-out;
-        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        color: #e5e9f0;
-    }
-    .tl-card:hover {
-        transform: translateY(-5px) translateX(3px);
-        box-shadow: 0 12px 30px rgba(107, 155, 209, 0.15);
-    }
-    .tl-card-support {
-        border-left-color: #4ade80;
-        background: rgba(34, 197, 94, 0.1);
-    }
-    .tl-card-contradict {
-        border-left-color: #f87171;
-        background: rgba(239, 68, 68, 0.1);
-    }
-    .tl-card-info {
-        border-left-color: #60a5fa;
-        background: rgba(96, 165, 250, 0.1);
-    }
-    .tl-card-warning {
-        border-left-color: #fbbf24;
-        background: rgba(245, 158, 11, 0.1);
-    }
+/* ---------- Header ---------- */
+.tl-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 1.15rem 1.5rem;
+    border-radius: 14px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 24px rgba(0,0,0,0.25);
+    margin-bottom: 1.5rem;
+}
+.tl-brand { display: flex; align-items: center; gap: 0.9rem; }
+.tl-mark { width: 40px; height: 40px; flex: none; }
+.tl-title {
+    font-family: var(--serif);
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.1;
+    margin: 0;
+}
+.tl-sub { color: var(--muted); font-size: 0.92rem; margin-top: 0.25rem; }
+.tl-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    background: var(--surface-2);
+    color: var(--muted);
+    border: 1px solid var(--line);
+}
+.tl-chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+.tl-chip.ok { color: #9fe0c6; border-color: rgba(63, 182, 139, 0.45); }
+.tl-chip.ok .dot { background: var(--ok); }
 
-    .tl-source {
-        background: rgba(23, 30, 40, 0.8);
-        border-left: 3px solid #4b5563;
-        padding: 0.7rem 1rem;
-        border-radius: 10px;
-        margin: 0.5rem 0;
-        font-size: 0.9rem;
-        color: #d1d5db;
-        animation: fadeIn 0.5s ease-in;
-        transition: all 0.25s ease;
-    }
-    .tl-source:hover {
-        border-left-color: #6b9bd1;
-        background: rgba(107, 155, 209, 0.1);
-        transform: translateX(5px);
-    }
+/* ---------- Verdict: stacked sheets (the one 3D moment) ---------- */
+.verdict-wrap {
+    position: relative;
+    margin: 1.5rem 14px 2.4rem 0;
+    perspective: 1400px;
+}
+.verdict-wrap::before,
+.verdict-wrap::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+}
+.verdict-wrap::before { transform: translate(14px, 14px); opacity: 0.45; z-index: 0; }
+.verdict-wrap::after  { transform: translate(7px, 7px);  opacity: 0.75; z-index: 1; }
 
-    [data-testid="stMetric"] {
-        background: rgba(23, 30, 40, 0.75);
-        backdrop-filter: blur(15px);
-        border: 1px solid rgba(107, 155, 209, 0.15);
-        border-radius: 14px;
-        padding: 1rem;
-        animation: fadeInUp 0.5s ease-in;
-        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    [data-testid="stMetric"]:hover {
-        transform: translateY(-5px) scale(1.02);
-        box-shadow: 0 12px 30px rgba(107, 155, 209, 0.2);
-    }
+.verdict-card {
+    --tone: var(--accent);
+    position: relative;
+    z-index: 2;
+    padding: 1.6rem 2rem 1.6rem 2.2rem;
+    border-radius: 16px;
+    background: linear-gradient(160deg, var(--surface-3), var(--surface));
+    border: 1px solid var(--line);
+    box-shadow:
+        0 1px 0 rgba(255,255,255,0.06) inset,
+        0 18px 40px rgba(0,0,0,0.45);
+    transform-origin: 50% 0;
+    transform: rotateX(1.5deg);
+    animation: settle 0.7s ease-out both;
+    overflow: hidden;
+}
+.verdict-card::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 6px;
+    background: var(--tone);
+}
+.verdict-card.supported    { --tone: var(--ok); }
+.verdict-card.conflicted   { --tone: var(--warn); }
+.verdict-card.insufficient { --tone: var(--bad); }
+.verdict-card.unknown      { --tone: var(--faint); }
 
-    .stButton > button {
-        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        border-radius: 12px;
-        font-weight: 600;
-        background: linear-gradient(135deg, #2f5d8a, #4a6fa5);
-        border: none;
-        color: white;
-    }
-    .stButton > button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 12px 30px rgba(107, 155, 209, 0.35);
-        background: linear-gradient(135deg, #4a6fa5, #6b9bd1);
-    }
-    .stButton > button:active {
-        transform: translateY(-1px) scale(0.98);
-    }
+.verdict-label { color: var(--muted); font-size: 0.85rem; margin: 0 0 0.3rem 0; }
+.verdict-title {
+    font-family: var(--serif);
+    font-size: 2.1rem;
+    font-weight: 700;
+    color: var(--tone);
+    margin: 0;
+    line-height: 1.15;
+}
+.verdict-subtitle {
+    font-size: 1rem;
+    color: #c4cddb;
+    margin: 0.7rem 0 0 0;
+    line-height: 1.55;
+    max-width: 78ch;
+}
 
-    .stProgress > div > div > div > div {
-        background: linear-gradient(90deg, #6b9bd1, #4a6fa5, #8bb4de);
-        background-size: 200% 100%;
-        animation: gradientShift 2s ease infinite;
-        border-radius: 10px;
-        transition: width 0.3s ease;
-    }
+@keyframes settle {
+    from { opacity: 0; transform: rotateX(9deg) translateY(10px); }
+    to   { opacity: 1; transform: rotateX(1.5deg) translateY(0); }
+}
 
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #0f141b, #171e28);
-        animation: slideInLeft 0.5s ease-out;
-        border-right: 1px solid rgba(107, 155, 209, 0.1);
-    }
-    [data-testid="stSidebar"] .block-container {
-        padding-top: 1.5rem;
-    }
-    [data-testid="stSidebar"] * {
-        color: #d1d5db;
-    }
+/* ---------- KPI cards ---------- */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 0.9rem;
+    margin: 1.2rem 0 1.6rem;
+}
+.kpi-card {
+    --tone: var(--accent);
+    position: relative;
+    padding: 1rem 1.1rem 1rem 1.25rem;
+    border-radius: 12px;
+    background: linear-gradient(170deg, var(--surface-2), var(--surface));
+    border: 1px solid var(--line);
+    box-shadow:
+        0 1px 0 rgba(255,255,255,0.05) inset,
+        0 2px 0 rgba(0,0,0,0.25),
+        0 10px 22px rgba(0,0,0,0.28);
+    transition: border-color 0.2s ease;
+}
+.kpi-card:hover { border-color: var(--accent-dim); }
+.kpi-card::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 12px; bottom: 12px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--tone);
+}
+.kpi-card.success { --tone: var(--ok); }
+.kpi-card.warning { --tone: var(--warn); }
+.kpi-card.danger  { --tone: var(--bad); }
+.kpi-label { color: var(--muted); font-size: 0.82rem; font-weight: 500; margin-bottom: 0.45rem; }
+.kpi-value {
+    color: var(--text);
+    font-family: var(--serif);
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+.kpi-sub { color: var(--faint); font-size: 0.78rem; margin-top: 0.35rem; }
 
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 4px;
-        background: rgba(23, 30, 40, 0.6);
-        border-radius: 12px;
-        padding: 4px;
-        animation: fadeIn 0.5s ease-in;
-    }
-    .stTabs [data-baseweb="tab"] {
-        border-radius: 10px;
-        padding: 0.6rem 1.2rem;
-        font-weight: 600;
-        color: #9ca3af;
-        transition: all 0.25s ease;
-    }
-    .stTabs [data-baseweb="tab"]:hover {
-        background: rgba(107, 155, 209, 0.12);
-        transform: translateY(-2px);
-        color: #e5e9f0;
-    }
-    .stTabs [aria-selected="true"] {
-        background: rgba(107, 155, 209, 0.2) !important;
-        color: #8bb4de !important;
-    }
+/* ---------- Content cards ---------- */
+.tl-card {
+    --tone: var(--accent);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--tone);
+    border-radius: 10px;
+    padding: 0.9rem 1.1rem;
+    margin: 0.55rem 0;
+    color: var(--text);
+    font-size: 0.93rem;
+    line-height: 1.55;
+}
+.tl-card.support    { --tone: var(--ok); }
+.tl-card.contradict { --tone: var(--bad); }
+.tl-card.info       { --tone: var(--accent); }
+.tl-card.warning    { --tone: var(--warn); }
+.tl-card .meta { color: var(--muted); font-size: 0.85rem; }
 
-    .streamlit-expanderHeader {
-        background: rgba(23, 30, 40, 0.7) !important;
-        border-radius: 10px !important;
-        font-weight: 600 !important;
-        color: #e5e9f0 !important;
-        transition: all 0.25s ease !important;
-    }
-    .streamlit-expanderHeader:hover {
-        background: rgba(107, 155, 209, 0.12) !important;
-        transform: translateX(3px);
-    }
+.tl-source {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0.8rem 1.1rem;
+    margin: 0.5rem 0;
+    font-size: 0.9rem;
+    color: #c4cddb;
+    line-height: 1.55;
+}
+.tl-source b { color: var(--text); }
 
-    .empty-state {
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(239, 68, 68, 0.05));
-        border-left: 5px solid #f87171;
-        padding: 2rem;
-        border-radius: 14px;
-        text-align: center;
-        animation: fadeInUp 0.7s ease-in;
-        color: #e5e9f0;
-    }
+/* ---------- Web source cards ---------- */
+.source-card {
+    --tone: var(--warn);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--tone);
+    border-radius: 10px;
+    padding: 0.95rem 1.1rem;
+    margin: 0.6rem 0;
+}
+.source-card.support    { --tone: var(--ok); }
+.source-card.contradict { --tone: var(--bad); }
+.source-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.45rem;
+}
+.source-badge {
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    color: var(--tone);
+    border: 1px solid var(--tone);
+}
+.source-domain { color: var(--faint); font-size: 0.82rem; }
+.source-title { color: var(--text); font-weight: 600; font-size: 0.97rem; line-height: 1.4; margin-bottom: 0.35rem; }
+.source-snippet { color: var(--muted); font-size: 0.87rem; line-height: 1.55; margin-bottom: 0.5rem; }
+.source-link { color: var(--accent); font-size: 0.85rem; text-decoration: none; font-weight: 500; }
+.source-link:hover { text-decoration: underline; }
 
-    .stTextInput > div > div > input {
-        background: rgba(23, 30, 40, 0.8) !important;
-        color: #e5e9f0 !important;
-        border: 1px solid rgba(107, 155, 209, 0.2) !important;
-        border-radius: 12px !important;
-        transition: all 0.3s ease !important;
-    }
-    .stTextInput > div > div > input:focus {
-        border-color: #6b9bd1 !important;
-        box-shadow: 0 0 0 3px rgba(107, 155, 209, 0.15) !important;
-    }
+/* ---------- Coverage bar ---------- */
+.coverage-bar {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 1.1rem 1.25rem;
+    margin: 1rem 0;
+}
+.coverage-label {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text);
+    font-weight: 500;
+    margin-bottom: 0.6rem;
+}
+.coverage-track {
+    height: 10px;
+    background: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    overflow: hidden;
+}
+.coverage-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+    border-radius: 999px;
+}
 
-    .stSelectbox > div > div {
-        background: rgba(23, 30, 40, 0.8) !important;
-        border: 1px solid rgba(107, 155, 209, 0.2) !important;
-        border-radius: 12px !important;
-    }
+/* ---------- Empty state ---------- */
+.empty-state {
+    border: 1px dashed var(--line);
+    border-radius: 12px;
+    padding: 1.4rem 1.6rem;
+    color: var(--muted);
+    background: rgba(20, 28, 42, 0.5);
+    line-height: 1.6;
+}
+.empty-state b { color: var(--text); }
 
-    .stAlert {
-        background: rgba(23, 30, 40, 0.8) !important;
-        color: #e5e9f0 !important;
-        border-radius: 12px !important;
-        border: 1px solid rgba(107, 155, 209, 0.15) !important;
-    }
+/* ---------- Streamlit widgets ---------- */
+.stButton > button {
+    border-radius: 10px;
+    font-weight: 600;
+    font-family: var(--sans);
+    background: linear-gradient(180deg, #3b7db5, #2c6694);
+    border: 1px solid #4b8fc6;
+    color: #fff;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.15) inset, 0 4px 10px rgba(0,0,0,0.3);
+    transition: background 0.2s ease, transform 0.15s ease;
+}
+.stButton > button:hover {
+    background: linear-gradient(180deg, #4a8cc4, #3573a4);
+    border-color: #6aa6d6;
+    color: #fff;
+}
+.stButton > button:active { transform: translateY(1px); }
+
+[data-testid="stSidebar"] {
+    background: var(--surface);
+    border-right: 1px solid var(--line);
+}
+[data-testid="stSidebar"] * { color: #cfd7e4; }
+[data-testid="stSidebar"] h3 { font-size: 1.05rem; color: var(--text); }
+
+.stTabs [data-baseweb="tab-list"] {
+    gap: 2px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 4px;
+    overflow-x: auto;
+}
+.stTabs [data-baseweb="tab"] {
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    color: var(--muted);
+}
+.stTabs [aria-selected="true"] {
+    background: var(--surface-3) !important;
+    color: var(--text) !important;
+}
+.stTabs [data-baseweb="tab-highlight"] { background: var(--accent) !important; }
+
+.stTextInput > div > div > input {
+    background: var(--surface) !important;
+    color: var(--text) !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 10px !important;
+    padding: 0.7rem 0.9rem !important;
+}
+.stTextInput > div > div > input:focus { border-color: var(--accent) !important; }
+
+[data-testid="stExpander"] {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+}
+
+@media (max-width: 720px) {
+    .tl-header { flex-direction: column; align-items: flex-start; }
+    .verdict-title { font-size: 1.6rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .verdict-card { animation: none; transform: none; }
+    * { transition: none !important; }
+}
 </style>
-""", unsafe_allow_html=True)
+"""
+st.markdown(STYLES, unsafe_allow_html=True)
+
+
+# ============================================
+# HELPERS
+# ============================================
+def esc(value) -> str:
+    """Escape any text that ends up inside raw HTML (web results are untrusted)."""
+    return html.escape(str(value if value is not None else ""))
+
+
+def block(markup: str) -> str:
+    """Strip indentation so Markdown never treats HTML as a code block."""
+    return "".join(line.strip() for line in markup.strip().splitlines())
+
+
+def render_kpi_card(label: str, value: str, sub: str = "", variant: str = "accent") -> str:
+    sub_html = f'<div class="kpi-sub">{esc(sub)}</div>' if sub else ""
+    return (
+        f'<div class="kpi-card {esc(variant)}">'
+        f'<div class="kpi-label">{esc(label)}</div>'
+        f'<div class="kpi-value">{esc(value)}</div>'
+        f"{sub_html}</div>"
+    )
+
+
+def render_kpi_grid(cards: list) -> str:
+    inner = "".join(
+        render_kpi_card(c["label"], c["value"], c.get("sub", ""), c.get("variant", "accent"))
+        for c in cards
+    )
+    return f'<div class="kpi-grid">{inner}</div>'
+
+
+def card(variant: str, body: str) -> str:
+    """Content card. `body` must already be escaped / safe HTML."""
+    return f'<div class="tl-card {variant}">{body}</div>'
+
+
+def empty_state(message: str):
+    st.markdown(f'<div class="empty-state">{message}</div>', unsafe_allow_html=True)
+
 
 # ============================================
 # HEADER
 # ============================================
 docs_count = len(st.session_state.get("documents", []))
-status_html = (
-    f'<span class="tl-chip ok">✅ Indexed: {docs_count} document(s)</span>'
-    if docs_count > 0
-    else '<span class="tl-chip">📂 No documents indexed</span>'
+if docs_count > 0:
+    status_html = f'<span class="tl-chip ok"><span class="dot"></span>{docs_count} document(s) indexed</span>'
+else:
+    status_html = '<span class="tl-chip"><span class="dot"></span>No documents indexed</span>'
+
+LOGO_SVG = (
+    '<svg class="tl-mark" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+    '<rect x="3" y="3" width="34" height="34" rx="9" fill="#1a2436" stroke="#2a3850"/>'
+    '<circle cx="18" cy="18" r="7" stroke="#5aaee6" stroke-width="2.4"/>'
+    '<path d="M23.5 23.5L30 30" stroke="#5aaee6" stroke-width="2.4" stroke-linecap="round"/>'
+    '<path d="M14.8 18.2l2.3 2.3 4.2-4.6" stroke="#3fb68b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+    "</svg>"
 )
 
-st.markdown(f"""
+st.markdown(
+    block(
+        f"""
 <div class="tl-header">
+  <div class="tl-brand">
+    {LOGO_SVG}
     <div>
-        <div class="tl-title"><span class="tl-logo">🔍</span>TruthLens</div>
-        <div class="tl-sub">Don't just get answers. Get truth.</div>
+      <div class="tl-title">TruthLens</div>
+      <div class="tl-sub">Check any claim against your documents and the live web.</div>
     </div>
-    <div>{status_html}</div>
+  </div>
+  <div>{status_html}</div>
 </div>
-""", unsafe_allow_html=True)
+"""
+    ),
+    unsafe_allow_html=True,
+)
 
 # ============================================
 # SIDEBAR
 # ============================================
 with st.sidebar:
-    st.markdown("### 📂 Upload Documents")
+    st.markdown("### Documents")
     st.caption("PDF, DOCX, TXT, PNG, JPG")
 
     uploaded_files = st.file_uploader(
-        "Files upload karo",
+        "Upload documents",
         type=["pdf", "docx", "txt", "png", "jpg", "jpeg", "tiff", "bmp"],
         accept_multiple_files=True,
-        label_visibility="collapsed"
+        label_visibility="collapsed",
     )
 
-    auto_process = st.checkbox("⚡ Auto-process", value=True)
+    auto_process = st.checkbox("Process files on upload", value=True)
 
     st.markdown("---")
-    st.markdown("### 🌍 Answer Language")
+    st.markdown("### Answer language")
 
     answer_lang = st.selectbox(
-        "Answer kis bhasha mein?",
+        "Answer language",
         ["Auto (same as question)", "English", "Hindi", "Marathi", "Tamil",
          "Bengali", "Telugu", "Gujarati", "Kannada", "Malayalam", "Punjabi", "Urdu"],
-        label_visibility="collapsed"
+        label_visibility="collapsed",
     )
 
     lang_map = {
         "Auto (same as question)": None,
         "English": "en", "Hindi": "hi", "Marathi": "mr", "Tamil": "ta",
         "Bengali": "bn", "Telugu": "te", "Gujarati": "gu", "Kannada": "kn",
-        "Malayalam": "ml", "Punjabi": "pa", "Urdu": "ur"
+        "Malayalam": "ml", "Punjabi": "pa", "Urdu": "ur",
     }
 
     st.markdown("---")
-    st.caption("ALGOTHON'26 · Team 240 · PS: ALG-AI-02")
+    st.markdown("### Investigation settings")
+
+    enable_cee = st.checkbox(
+        "Counterfactual check", value=True,
+        help="Runs a targeted search after the first verdict to see what could change it.",
+    )
+    enable_serpapi = st.checkbox(
+        "Live web evidence", value=True,
+        help="Pulls web, news and fact-check results through SerpApi.",
+    )
 
 # ============================================
 # PROCESS DOCUMENTS
@@ -412,10 +555,12 @@ if uploaded_files:
     processed_files = st.session_state.get("processed_files", [])
     new_files = [f for f in current_files if f not in processed_files]
 
-    trigger = (auto_process and new_files) or st.sidebar.button("🔄 Process Documents", use_container_width=True)
+    trigger = (auto_process and new_files) or st.sidebar.button(
+        "Process documents", use_container_width=True
+    )
 
     if trigger:
-        with st.spinner("📂 Processing documents..."):
+        with st.spinner("Processing documents..."):
             documents = []
             progress = st.progress(0)
             failed = []
@@ -429,326 +574,575 @@ if uploaded_files:
                     if doc["full_text"].strip():
                         documents.append(doc)
                     else:
-                        failed.append(uf.name)
+                        failed.append(f"{uf.name}: no readable text found")
                     progress.progress((i + 1) / len(uploaded_files))
                 except Exception as e:
-                    failed.append(f"{uf.name}: {str(e)}")
+                    failed.append(f"{uf.name}: {e}")
+
+            st.session_state["failed_files"] = failed
 
             if documents:
                 process_documents(documents)
                 st.session_state["documents"] = documents
                 st.session_state["processed_files"] = current_files
-                st.toast(f"✅ {len(documents)} files indexed!", icon="🎉")
-                st.success(f"✅ {len(documents)} files indexed!")
+                st.toast(f"{len(documents)} file(s) indexed", icon="✅")
                 st.rerun()
             else:
-                st.toast("❌ Koi file parse nahi hui", icon="🚨")
-                st.error("❌ Koi file parse nahi hui.")
+                st.error("None of the uploaded files could be read.")
 
-            if failed:
-                with st.expander(f"⚠️ {len(failed)} failed"):
-                    for f in failed:
-                        st.write(f"- {f}")
+if st.session_state.get("failed_files"):
+    with st.expander(f"{len(st.session_state['failed_files'])} file(s) could not be processed"):
+        for item in st.session_state["failed_files"]:
+            st.write(f"- {item}")
 
 # ============================================
-# DOCUMENTS DISPLAY
+# INDEXED DOCUMENTS
 # ============================================
-if "documents" in st.session_state and st.session_state["documents"]:
-    with st.expander(f"📚 Indexed Documents ({len(st.session_state['documents'])})"):
+if st.session_state.get("documents"):
+    with st.expander(f"Indexed documents ({len(st.session_state['documents'])})"):
         for doc in st.session_state["documents"]:
             lang_name = get_lang_name(doc["language"])
-            st.markdown(f"- **{doc['file']}** — {lang_name} — {len(doc['pages'])} pages")
+            st.markdown(f"- **{doc['file']}** — {lang_name}, {len(doc['pages'])} pages")
 
 # ============================================
 # QUESTION INPUT
 # ============================================
-st.markdown("---")
-st.markdown("### 💬 Ask a Question")
+st.markdown("### Ask a question or check a claim")
 
 query = st.text_input(
-    "Apna sawaal likho:",
-    placeholder="Example: When did employee join?",
-    label_visibility="collapsed"
+    "Question or claim",
+    placeholder="Example: Elon Musk acquired Twitter in 2022",
+    label_visibility="collapsed",
 )
 
-if st.button("🔍 Investigate", type="primary", use_container_width=True) and query:
-    if "documents" not in st.session_state or not st.session_state["documents"]:
-        st.toast("📭 No documents available", icon="⚠️")
-        st.markdown("""
-        <div class="empty-state">
-            <h3>📭 No documents available</h3>
-            <p>Upload and process at least one document first.</p>
-        </div>
-        """, unsafe_allow_html=True)
-        st.stop()
+run_clicked = st.button("Investigate", type="primary", use_container_width=True)
 
-    with st.spinner("🔍 Investigating documents..."):
-        q_lang = detect_lang(query)
-        query_en = translate(query, "en") if q_lang != "en" else query
+
+# ============================================
+# PIPELINE
+# ============================================
+def run_investigation(query: str) -> dict:
+    has_docs = bool(st.session_state.get("documents"))
+
+    q_lang = detect_lang(query)
+    query_en = translate(query, "en") if q_lang != "en" else query
+
+    chunks = []
+    conflict_data = {}
+    answerability = {"level": "no_evidence", "label": "No evidence", "reason": ""}
+    confidence = {"score": 0, "relevance": 0, "agreement": 0, "penalty": 0}
+    counter_evidence = {}
+    gap_data = {}
+    evidence_battle = {}
+    temporal_analysis = {}
+    source_drift = {}
+    dependency_graph = {}
+
+    if has_docs:
         chunks = retrieve(query_en, top_k=5)
+        if chunks:
+            conflict_data = detect_conflict(chunks)
+            answerability = check_answerability(chunks, conflict_data, query)
+            confidence = calculate_evidence_confidence(chunks, conflict_data)
+            counter_evidence = find_counter_evidence(query, chunks)
+            gap_data = detect_evidence_gaps(query, chunks, conflict_data)
+            evidence_battle = run_evidence_battle(query, chunks)
+            temporal_analysis = analyze_temporal_conflicts(chunks)
+            source_drift = detect_source_drift(chunks)
+            dependency_graph = build_claim_dependency_graph(query, chunks)
 
-        if not chunks:
-            st.toast("📭 No evidence found", icon="⚠️")
-            st.error("📭 **No evidence found**")
-            st.stop()
+    investigation = {}
+    if enable_serpapi:
+        investigation = run_full_investigation(
+            claim=query_en,
+            document_chunks=chunks,
+            answerability=answerability,
+            enable_cee=enable_cee,
+        )
 
-        # Real conflict detection
-        conflict_data = detect_conflict(chunks)
-
-        answerability = check_answerability(chunks, conflict_data, query)
-        confidence = calculate_evidence_confidence(chunks, conflict_data)
-        counter_evidence = find_counter_evidence(query, chunks)
-        gap_data = detect_evidence_gaps(query, chunks, conflict_data)
-        evidence_battle = run_evidence_battle(query, chunks)
-        temporal_analysis = analyze_temporal_conflicts(chunks)
-        source_drift = detect_source_drift(chunks)
-        dependency_graph = build_claim_dependency_graph(query, chunks)
-
-        target = lang_map[answer_lang]
-        if answerability["level"] in ["strong", "moderate"]:
-            answer = get_answer(query, chunks, target)
-        else:
-            answer = "Cannot determine reliably. " + answerability["reason"]
-
-    # ============================================
-    # VERDICT BANNER
-    # ============================================
-    st.markdown("---")
-
-    if conflict_data.get("conflict"):
-        v_class, v_emoji, v_text = "verdict-conflict", "⚠️", "CONFLICT DETECTED"
-        v_sub = "Documents contradict each other"
-        st.toast("⚠️ Conflict detected!", icon="⚠️")
-    elif answerability["level"] in ["cannot_determine", "no_evidence"]:
-        v_class, v_emoji, v_text = "verdict-insufficient", "🟡", "INSUFFICIENT EVIDENCE"
-        v_sub = answerability["reason"]
+    target = lang_map[answer_lang]
+    if answerability["level"] in ["strong", "moderate"] and chunks:
+        answer = get_answer(query, chunks, target)
+    elif investigation and investigation.get("final_verdict"):
+        answer = investigation["final_verdict"].get("summary", "Cannot determine reliably.")
     else:
-        v_class, v_emoji, v_text = "verdict-supported", "✅", "SUPPORTED"
-        v_sub = answerability["reason"]
-        st.balloons()
+        answer = "Cannot determine reliably. " + answerability["reason"]
 
-    st.markdown(f"""
-    <div class="verdict-banner {v_class}">
-        <p class="verdict-title">{v_emoji} {v_text}</p>
-        <p class="verdict-subtitle">{v_sub}</p>
-    </div>
-    """, unsafe_allow_html=True)
+    return {
+        "query": query,
+        "answer": answer,
+        "chunks": chunks,
+        "conflict_data": conflict_data,
+        "answerability": answerability,
+        "confidence": confidence,
+        "counter_evidence": counter_evidence,
+        "gap_data": gap_data,
+        "evidence_battle": evidence_battle,
+        "temporal_analysis": temporal_analysis,
+        "source_drift": source_drift,
+        "dependency_graph": dependency_graph,
+        "investigation": investigation,
+    }
 
-    # Animated Confidence
-    st.markdown("#### 📊 Evidence Confidence")
-    progress_bar = st.progress(0)
-    for i in range(confidence['score']):
-        progress_bar.progress(i + 1)
-        time.sleep(0.005)
-    st.markdown(f"**{confidence['score']}%**")
 
-    col1, col2, col3 = st.columns(3)
-    col1.metric("📊 Confidence", f"{confidence['score']}%")
-    col2.metric("💪 Strength", answerability['label'])
-    col3.metric("📚 Sources", len(set(c['file'] for c in chunks)))
+if run_clicked:
+    if not query.strip():
+        st.warning("Enter a question or claim to investigate.")
+    else:
+        if not st.session_state.get("documents"):
+            st.info("No documents are indexed, so this investigation will use live web evidence only.")
+        with st.spinner("Investigating..."):
+            st.session_state["result"] = run_investigation(query.strip())
 
-    # ============================================
-    # TABS
-    # ============================================
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "📝 Answer", "⚖️ Evidence", "🔍 Investigation", "📈 Analysis", "🕸️ Graphs"
-    ])
 
-    with tab1:
-        st.markdown("### 📝 Answer")
-        st.info(answer)
+# ============================================
+# RESULTS
+# ============================================
+def render_verdict(r: dict):
+    investigation = r["investigation"]
+    conflict_data = r["conflict_data"]
+    answerability = r["answerability"]
 
-        st.markdown("### 📌 Citations")
-        for i, c in enumerate(chunks[:5], 1):
+    final_verdict = investigation.get("final_verdict", {}) if investigation else {}
+    verdict_label = final_verdict.get("verdict", "UNKNOWN")
+
+    if verdict_label == "SUPPORTED":
+        v_class, v_text = "supported", "Supported"
+    elif verdict_label == "CONFLICTED":
+        v_class, v_text = "conflicted", "Conflicted"
+    elif verdict_label == "INSUFFICIENT":
+        v_class, v_text = "insufficient", "Insufficient evidence"
+    elif conflict_data.get("conflict"):
+        v_class, v_text = "conflicted", "Conflict found in documents"
+    else:
+        v_class, v_text = "unknown", "Unknown"
+
+    v_sub = final_verdict.get("summary", answerability.get("reason", ""))
+
+    st.markdown(
+        block(
+            f"""
+<div class="verdict-wrap">
+  <div class="verdict-card {v_class}">
+    <p class="verdict-label">Verdict</p>
+    <p class="verdict-title">{esc(v_text)}</p>
+    <p class="verdict-subtitle">{esc(v_sub)}</p>
+  </div>
+</div>
+"""
+        ),
+        unsafe_allow_html=True,
+    )
+
+    if final_verdict:
+        kpi = get_kpi_cards(final_verdict)
+
+        verdict_variant = {
+            "SUPPORTED": "success",
+            "CONFLICTED": "warning",
+            "INSUFFICIENT": "warning",
+            "UNKNOWN": "danger",
+        }.get(verdict_label, "accent")
+
+        try:
+            conf_num = float(str(kpi.get("Confidence", "0%")).rstrip("%"))
+        except Exception:
+            conf_num = 0
+        conf_variant = "success" if conf_num > 60 else "warning" if conf_num > 30 else "danger"
+
+        cards = [
+            {"label": "Verdict", "value": kpi.get("Verdict", "—"),
+             "sub": "Final conclusion", "variant": verdict_variant},
+            {"label": "Confidence", "value": kpi.get("Confidence", "—"),
+             "sub": "Evidence strength", "variant": conf_variant},
+            {"label": "Support", "value": kpi.get("Support", "—"),
+             "sub": "Supporting weight", "variant": "success"},
+            {"label": "Contradiction", "value": kpi.get("Contradict", "—"),
+             "sub": "Opposing weight", "variant": "danger"},
+            {"label": "Evidence items", "value": kpi.get("Evidence", "—"),
+             "sub": "Total reviewed", "variant": "accent"},
+            {"label": "Independent sources", "value": kpi.get("Independent", "—"),
+             "sub": "Unique clusters", "variant": "accent"},
+        ]
+        st.markdown(render_kpi_grid(cards), unsafe_allow_html=True)
+
+    return final_verdict
+
+
+def render_answer_tab(r: dict):
+    st.markdown("### Answer")
+    st.info(r["answer"])
+
+    if r["chunks"]:
+        st.markdown("#### Document citations")
+        for i, c in enumerate(r["chunks"][:5], 1):
             st.markdown(
-                f'<div class="tl-source">'
-                f'<b>{i}. {c["file"]}</b> — Page {c.get("page", "?")}<br>'
-                f'{c["text"][:250]}...'
-                f'</div>',
-                unsafe_allow_html=True
+                block(
+                    f'<div class="tl-source"><b>{i}. {esc(c["file"])}</b> — page {esc(c.get("page", "?"))}<br>'
+                    f'{esc(c["text"][:250])}…</div>'
+                ),
+                unsafe_allow_html=True,
             )
 
-        with st.expander("📐 How confidence is calculated"):
-            st.markdown(f"""
-**Formula:**
-Confidence = (Relevance × 0.4) + (Agreement × 0.4) + Conflict Penalty
 
-**Your values:**
-- Relevance: {confidence['relevance']}%
-- Agreement: {confidence['agreement']}%
-- Conflict Penalty: {confidence['penalty']}
-- **Final: {confidence['score']}%**
-            """)
+def render_evidence_tab(r: dict):
+    battle = r["evidence_battle"]
+    st.markdown("### Supporting and contradicting evidence")
 
-    with tab2:
-        st.markdown("### ⚖️ Supporting vs Contradicting Evidence")
+    if battle.get("candidate_answer"):
+        st.markdown(f"**Candidate answer:** {battle.get('candidate_answer', '')}")
+        col1, col2 = st.columns(2)
 
-        if evidence_battle.get("candidate_answer"):
-            st.markdown(f"**Candidate Answer:** {evidence_battle.get('candidate_answer', '')}")
+        with col1:
+            st.markdown("#### Supporting")
+            for claim in battle.get("supporter", {}).get("claims", []):
+                st.markdown(
+                    card("support", f'<b>{esc(claim.get("source", "Document"))}</b><br>{esc(claim.get("claim", ""))}'),
+                    unsafe_allow_html=True,
+                )
 
-            col1, col2 = st.columns(2)
+        with col2:
+            st.markdown("#### Contradicting")
+            for claim in battle.get("skeptic", {}).get("claims", []):
+                st.markdown(
+                    card("contradict", f'<b>{esc(claim.get("source", "Document"))}</b><br>{esc(claim.get("claim", ""))}'),
+                    unsafe_allow_html=True,
+                )
+    else:
+        empty_state("<b>No document evidence yet.</b><br>Upload documents in the sidebar to compare supporting and opposing claims.")
 
-            with col1:
-                st.markdown("#### 🔵 Supporting Evidence")
-                supporter = evidence_battle.get("supporter", {})
-                claims = supporter.get("claims", [])
-                if claims:
-                    for claim in claims:
-                        st.markdown(f"""
-<div class="tl-card tl-card-support">
-<b>{claim.get('source', 'Doc')}</b> (Page {claim.get('page', '?')})<br>
-{claim.get('claim', '')}<br>
-<i>Strength: {claim.get('strength', 'unknown')}</i>
+
+def render_investigation_tab(r: dict):
+    st.markdown("### Investigation details")
+    shown = False
+
+    if r["counter_evidence"].get("candidate_answer"):
+        shown = True
+        st.markdown("#### Counter-evidence")
+        st.write(r["counter_evidence"].get("candidate_answer", ""))
+
+    if r["gap_data"].get("evidence_gaps"):
+        shown = True
+        st.markdown("#### Evidence gaps")
+        for gap in r["gap_data"].get("evidence_gaps", []):
+            st.markdown(
+                card("warning", f'<b>{esc(gap.get("missing", ""))}</b><br><span class="meta">{esc(gap.get("why_needed", ""))}</span>'),
+                unsafe_allow_html=True,
+            )
+
+    if not shown:
+        empty_state("<b>Nothing to report.</b><br>No counter-evidence or gaps were found in the indexed documents.")
+
+
+def render_analysis_tab(r: dict):
+    st.markdown("### Temporal and source analysis")
+    shown = False
+
+    if r["temporal_analysis"].get("temporal_analysis"):
+        shown = True
+        ta = r["temporal_analysis"]["temporal_analysis"]
+        st.markdown(f"**Temporal verdict:** {ta.get('verdict', 'no_conflict')}")
+        for change in ta.get("temporal_changes", []):
+            st.markdown(f"- {change.get('attribute', '')}: {change.get('from', '')} → {change.get('to', '')}")
+
+    if r["source_drift"].get("source_drift"):
+        sd = r["source_drift"]["source_drift"]
+        if sd.get("drift_detected"):
+            shown = True
+            st.warning("Source drift detected between document versions.")
+            for change in sd.get("changes", []):
+                st.markdown(
+                    f"- **{change.get('section', '')}**: "
+                    f"{change.get('old_value', '')} → {change.get('new_value', '')}"
+                )
+
+    if not shown:
+        empty_state("<b>No temporal conflicts or source drift detected.</b>")
+
+
+def render_graphs_tab(r: dict):
+    st.markdown("### Visual analysis")
+    shown = False
+
+    dg = r["dependency_graph"].get("dependency_graph") if r["dependency_graph"] else None
+    if dg and dg.get("claims"):
+        fig = build_dependency_graph_figure(dg)
+        if fig:
+            shown = True
+            st.plotly_chart(fig, use_container_width=True)
+
+    if r["conflict_data"].get("conflict"):
+        fig = build_conflict_graph(r["conflict_data"])
+        if fig:
+            shown = True
+            st.plotly_chart(fig, use_container_width=True)
+
+    if not shown:
+        empty_state("<b>No graphs for this query.</b><br>Graphs appear when documents contain linked claims or conflicts.")
+
+
+def render_live_tab(r: dict):
+    investigation = r["investigation"]
+    st.markdown("### Live web evidence")
+
+    live = investigation.get("live_evidence", {}) if investigation else {}
+    if not live:
+        empty_state("<b>Live web evidence was not run.</b><br>Turn it on under Investigation settings in the sidebar.")
+        return
+
+    kpi = get_serpapi_kpis(live)
+    st.markdown(
+        render_kpi_grid([
+            {"label": "Total sources", "value": kpi.get("Total Sources", "0"), "variant": "accent"},
+            {"label": "Supporting", "value": kpi.get("Supporting", "0"), "variant": "success"},
+            {"label": "Contradicting", "value": kpi.get("Contradicting", "0"), "variant": "danger"},
+            {"label": "News", "value": kpi.get("News", "0"), "variant": "accent"},
+            {"label": "Fact checks", "value": kpi.get("Fact Checks", "0"), "variant": "warning"},
+            {"label": "Scholar", "value": kpi.get("Scholar", "0"), "variant": "accent"},
+        ]),
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("#### News and web results")
+    all_live = live.get("supporting", [])[:5] + live.get("contradicting", [])[:5]
+
+    badge_text = {"support": "Supports", "contradict": "Contradicts", "neutral": "Neutral"}
+    for item in all_live:
+        stance = item.get("stance", "neutral")
+        if stance not in badge_text:
+            stance = "neutral"
+
+        link = item.get("link", "") or ""
+        domain = ""
+        if link:
+            try:
+                domain = urlparse(link).netloc.replace("www.", "")
+            except Exception:
+                pass
+        safe_link = link if link.startswith(("http://", "https://")) else ""
+        link_html = (
+            f'<a href="{esc(safe_link)}" target="_blank" rel="noopener noreferrer" class="source-link">Open source</a>'
+            if safe_link else ""
+        )
+
+        st.markdown(
+            block(
+                f"""
+<div class="source-card {stance}">
+  <div class="source-header">
+    <span class="source-badge">{badge_text[stance]}</span>
+    <span class="source-domain">{esc(domain)}</span>
+  </div>
+  <div class="source-title">{esc(item.get("title", "")[:120])}</div>
+  <div class="source-snippet">{esc(item.get("snippet", "")[:250])}…</div>
+  {link_html}
 </div>
-                        """, unsafe_allow_html=True)
-                else:
-                    st.caption("No supporting evidence")
+"""
+            ),
+            unsafe_allow_html=True,
+        )
 
-            with col2:
-                st.markdown("#### 🔴 Contradicting Evidence")
-                skeptic = evidence_battle.get("skeptic", {})
-                claims = skeptic.get("claims", [])
-                if claims:
-                    for claim in claims:
-                        st.markdown(f"""
-<div class="tl-card tl-card-contradict">
-<b>{claim.get('source', 'Doc')}</b> (Page {claim.get('page', '?')})<br>
-{claim.get('claim', '')}<br>
-<i>Impact: {claim.get('impact', 'unknown')}</i>
+
+def render_eeg_tab(r: dict):
+    investigation = r["investigation"]
+    st.markdown("### Expected evidence gap")
+    st.caption("What evidence should exist for this claim, and what was actually found.")
+
+    eeg = investigation.get("eeg_result", {}) if investigation else {}
+    if not eeg:
+        empty_state("<b>Expected evidence analysis was not run.</b>")
+        return
+
+    kpi = get_eeg_kpis(eeg)
+    st.markdown(
+        render_kpi_grid([
+            {"label": "Coverage", "value": kpi.get("Coverage", "—"), "variant": "success"},
+            {"label": "Search coverage", "value": kpi.get("Search Coverage", "—"), "variant": "accent"},
+            {"label": "Missing", "value": kpi.get("Missing", "—"), "variant": "warning"},
+            {"label": "High-priority missing", "value": kpi.get("High-Priority Missing", "—"), "variant": "danger"},
+            {"label": "Gap severity", "value": kpi.get("Gap Severity", "—"), "variant": "warning"},
+        ]),
+        unsafe_allow_html=True,
+    )
+
+    try:
+        coverage = max(0.0, min(100.0, float(eeg.get("coverage", 0))))
+    except (TypeError, ValueError):
+        coverage = 0.0
+
+    st.markdown(
+        block(
+            f"""
+<div class="coverage-bar">
+  <div class="coverage-label"><span>Evidence coverage</span><span>{coverage:.1f}%</span></div>
+  <div class="coverage-track"><div class="coverage-fill" style="width: {coverage}%;"></div></div>
 </div>
-                        """, unsafe_allow_html=True)
-                else:
-                    st.caption("No contradicting evidence")
+"""
+        ),
+        unsafe_allow_html=True,
+    )
 
-            verdict = evidence_battle.get("verdict", {})
-            decision = verdict.get("decision", "insufficient")
-            emoji = {"agree": "✅", "conflict": "⚠️", "insufficient": "🟡"}.get(decision, "🟡")
-            st.markdown(f"### {emoji} Verdict: **{decision.upper()}**")
-            st.caption(verdict.get("reasoning", ""))
+    st.markdown(f"**Summary:** {eeg.get('summary', '')}")
 
-    with tab3:
-        st.markdown("### 🔍 Investigation Details")
+    st.markdown("#### Expected signals found")
+    for f in eeg.get("found", []):
+        st.markdown(
+            card(
+                "support",
+                f'<b>[{esc(f.get("priority", ""))}]</b> {esc(f.get("signal", ""))}<br>'
+                f'<span class="meta">Matched: {esc(f.get("evidence_title", "")[:100])}</span>',
+            ),
+            unsafe_allow_html=True,
+        )
 
-        st.markdown("#### 🛑 Counter-Evidence Search")
-        if counter_evidence.get("candidate_answer"):
-            st.write(counter_evidence.get("candidate_answer", ""))
-            contradicting = counter_evidence.get("contradicting_evidence", [])
-            if contradicting:
-                for ce in contradicting:
-                    st.markdown(f"""
-<div class="tl-card tl-card-contradict">
-<b>{ce.get('source', 'Doc')}</b> (Page {ce.get('page', '?')})<br>
-{ce.get('claim', '')}<br>
-<i>{ce.get('impact', '')}</i>
-</div>
-                    """, unsafe_allow_html=True)
-            else:
-                st.success("No counter-evidence found")
+    st.markdown("#### Expected signals missing")
+    for m in eeg.get("missing", []):
+        st.markdown(
+            card(
+                "warning",
+                f'<b>[{esc(m.get("priority", ""))}]</b> {esc(m.get("signal", ""))}<br>'
+                f'<span class="meta">{esc(m.get("why", ""))}</span>',
+            ),
+            unsafe_allow_html=True,
+        )
 
-        st.markdown("#### 🟡 Evidence Gaps")
-        if answerability["level"] in ["cannot_determine", "low_relevance", "no_evidence"]:
-            gaps = gap_data.get("evidence_gaps", [])
-            resolutions = gap_data.get("resolution_evidence", [])
-            if gaps:
-                st.markdown("**Missing:**")
-                for gap in gaps:
-                    st.markdown(f"- ❌ **{gap.get('missing', '')}** — *{gap.get('why_needed', '')}*")
-            if resolutions:
-                st.markdown("**What would resolve this:**")
-                for res in resolutions:
-                    st.markdown(f"- 📄 **{res.get('document', '')}** — *{res.get('reason', '')}*")
-        else:
-            st.success("No evidence gaps identified")
 
-    with tab4:
-        st.markdown("### 📈 Temporal Truth Engine")
-        if temporal_analysis.get("temporal_analysis"):
-            ta = temporal_analysis["temporal_analysis"]
-            verdict = ta.get("verdict", "no_conflict")
-            if verdict == "temporal_progression":
-                st.info("⏳ **Temporal progression detected** — not a conflict")
-                for change in ta.get("temporal_changes", []):
-                    st.markdown(f"""
-<div class="tl-card tl-card-info">
-<b>{change.get('attribute', '')}</b><br>
-From: <code>{change.get('from', '')}</code><br>
-To: <code>{change.get('to', '')}</code><br>
-<i>{change.get('reason', '')}</i>
-</div>
-                    """, unsafe_allow_html=True)
-            elif verdict == "conflict":
-                st.warning("⚠️ **Real temporal conflict detected**")
-                for c in ta.get("real_conflicts", []):
-                    st.markdown(f"- **{c.get('claim_a', '')}** vs **{c.get('claim_b', '')}** — *{c.get('reason', '')}*")
-            else:
-                st.success("No temporal conflicts")
+def render_independence_tab(r: dict):
+    investigation = r["investigation"]
+    st.markdown("### Source independence")
+    st.caption("Many sources can trace back to one origin. This shows how many are truly independent.")
 
-        st.markdown("---")
-        st.markdown("### 📑 Source Drift Detection")
-        if source_drift.get("source_drift"):
-            sd = source_drift["source_drift"]
-            if sd.get("drift_detected"):
-                st.warning(f"Changes across {len(sd.get('documents_compared', []))} documents")
-                for change in sd.get("changes", []):
-                    sig = change.get("significance", "medium")
-                    emoji = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(sig, "🟡")
-                    st.markdown(f"""
-<div class="tl-card tl-card-warning">
-{emoji} <b>{change.get('section', '')}</b> ({change.get('change_type', '')})<br>
-Old: <code>{change.get('old_value', '')}</code> — <i>{change.get('old_source', '')}</i><br>
-New: <code>{change.get('new_value', '')}</code> — <i>{change.get('new_source', '')}</i>
-</div>
-                    """, unsafe_allow_html=True)
-            else:
-                st.success("No source drift detected")
+    cluster_data = investigation.get("cluster_data", {}) if investigation else {}
+    if not cluster_data:
+        empty_state("<b>Independence analysis was not run.</b>")
+        return
 
-    with tab5:
-        st.markdown("### 🕸️ Visual Analysis")
-        if dependency_graph.get("dependency_graph"):
-            dg = dependency_graph["dependency_graph"]
-            if dg.get("claims"):
-                st.markdown("#### 🔗 Claim Dependency Graph")
-                fig = build_dependency_graph_figure(dg)
-                if fig:
-                    st.plotly_chart(fig, use_container_width=True)
-                final = dg.get("final_answer", {})
-                decision = final.get("decision", "uncertain")
-                emoji = {"supported": "✅", "contradicted": "⚠️", "uncertain": "🟡"}.get(decision, "🟡")
-                st.markdown(f"**Final Decision:** {emoji} {decision.upper()}")
-                st.caption(final.get("reasoning", ""))
+    kpi = get_independence_kpis(cluster_data)
+    st.markdown(
+        render_kpi_grid([
+            {"label": "Total sources", "value": kpi.get("Total Sources", "0"), "variant": "accent"},
+            {"label": "Independent", "value": kpi.get("Independent Clusters", "0"), "variant": "success"},
+            {"label": "Concentration", "value": kpi.get("Concentration", "—"), "variant": "warning"},
+            {"label": "Independence score", "value": kpi.get("Independence Score", "—"), "variant": "accent"},
+        ]),
+        unsafe_allow_html=True,
+    )
 
-        if conflict_data.get("conflict"):
-            st.markdown("#### ⚠️ Conflict Graph")
-            fig = build_conflict_graph(conflict_data)
-            if fig:
-                st.plotly_chart(fig, use_container_width=True)
+    st.markdown("#### Clusters")
+    for c in cluster_data.get("clusters", [])[:10]:
+        st.markdown(
+            card(
+                "info",
+                f'<b>{esc(c.get("cluster_id", ""))}</b> — {esc(c.get("size", 0))} source(s), '
+                f'{esc(c.get("domain", ""))}<br>'
+                f'<span class="meta">{esc(c.get("representative_title", "")[:100])}</span>',
+            ),
+            unsafe_allow_html=True,
+        )
 
+
+def render_cee_tab(r: dict):
+    investigation = r["investigation"]
+    st.markdown("### What would change this verdict?")
+    st.caption("Counterfactual evidence check")
+
+    cee = investigation.get("cee_result", {}) if investigation else {}
+    if not cee:
+        empty_state("<b>Counterfactual check was not run.</b><br>Turn it on under Investigation settings in the sidebar.")
+        return
+
+    kpi = get_cee_kpis(cee)
+    st.markdown(
+        render_kpi_grid([
+            {"label": "Previous verdict", "value": kpi.get("Old Verdict", "—"), "variant": "accent"},
+            {"label": "New verdict", "value": kpi.get("New Verdict", "—"), "variant": "accent"},
+            {"label": "Changed", "value": kpi.get("Changed", "—"),
+             "variant": "success" if kpi.get("Changed") == "YES" else "warning"},
+            {"label": "Confidence before", "value": kpi.get("Confidence Before", "—"), "variant": "accent"},
+            {"label": "Confidence after", "value": kpi.get("Confidence After", "—"), "variant": "accent"},
+        ]),
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(f"**Reason:** {cee.get('reason', '')}")
+
+    st.markdown("#### Decisive evidence targets")
+    for t in cee.get("targets", []):
+        variant = "support" if t.get("direction") == "upgrade" else "contradict"
+        st.markdown(
+            card(
+                variant,
+                f'<b>{esc(t.get("direction", "")).capitalize()} · {esc(t.get("impact", ""))} impact</b><br>'
+                f'{esc(t.get("evidence", ""))}',
+            ),
+            unsafe_allow_html=True,
+        )
+
+
+def render_chain(r: dict, final_verdict: dict):
+    investigation = r["investigation"]
+    chunks = r["chunks"]
+    sources = {c["file"] for c in chunks} if chunks else set()
+    live_count = len(investigation.get("all_evidence", [])) if investigation else 0
+    eeg = investigation.get("eeg_result", {}) if investigation else {}
+    cluster_data = investigation.get("cluster_data", {}) if investigation else {}
+
+    with st.expander("Evidence chain"):
+        st.markdown(
+            f"""
+**Question:** {r['query']}
+
+↓
+
+**Document chunks:** {len(chunks)} from {len(sources)} document(s)
+
+↓
+
+**Live web evidence:** {live_count} item(s)
+
+↓
+
+**Expected-evidence coverage:** {eeg.get('coverage', 0)}% · gap severity {eeg.get('gap_severity', '—')}
+
+↓
+
+**Independent clusters:** {cluster_data.get('independent_clusters', 0)} of {cluster_data.get('total_sources', 0)}
+
+↓
+
+**Final verdict:** {final_verdict.get('verdict', 'UNKNOWN')} ({final_verdict.get('confidence', 0)}%)
+            """
+        )
+
+
+result = st.session_state.get("result")
+
+if result:
     st.markdown("---")
-    with st.expander("🔗 Evidence Chain"):
-        sources = set(c["file"] for c in chunks)
-        st.markdown(f"""
-**Question:** {query}
+    st.caption(f"Results for: {result['query']}")
 
-↓
+    final_verdict = render_verdict(result)
 
-**Retrieved:** {len(chunks)} chunks from {len(sources)} documents
+    tabs = st.tabs([
+        "Answer", "Evidence", "Investigation", "Analysis", "Graphs",
+        "Live web", "Expected gaps", "Independence", "Counterfactual",
+    ])
+    renderers = [
+        render_answer_tab, render_evidence_tab, render_investigation_tab,
+        render_analysis_tab, render_graphs_tab, render_live_tab,
+        render_eeg_tab, render_independence_tab, render_cee_tab,
+    ]
+    for tab, render in zip(tabs, renderers):
+        with tab:
+            render(result)
 
-↓
-
-**Claims Extracted:** {len(conflict_data.get('claims', []))}
-
-↓
-
-**Conflict:** {'⚠️ YES' if conflict_data.get('conflict') else '✓ NO'}
-
-↓
-
-**Answerability:** {answerability['label']}
-
-↓
-
-**Final Answer:** {'✅ Provided' if answerability['level'] in ['strong', 'moderate'] else '🤷 Cannot determine'}
-        """)
+    render_chain(result, final_verdict)
+else:
+    empty_state(
+        "<b>Ready when you are.</b><br>"
+        "Upload documents in the sidebar, then enter a claim above. "
+        "TruthLens checks it against your files and live web sources, and shows how strong the evidence is."
+    )
 
 st.markdown("---")
-st.caption(" TruthLens — Don't just get answers. Get truth.")
+st.caption("TruthLens — Don't just get answers. Get truth.")

@@ -1,5 +1,5 @@
 # llm.py
-# Groq version — Direct target language
+
 
 import os
 from groq import Groq
@@ -71,3 +71,50 @@ Answer in {lang_name} with citations:"""
     )
 
     return chat_completion.choices[0].message.content
+
+
+# ============================================================
+# NEW: Generic LLM helper for investigation modules
+# (SerpApi, EEG, Dependency, CEE use karenge)
+# ============================================================
+
+def get_llm_response(prompt, max_tokens=800, temperature=0.3, system_prompt=None, json_mode=False):
+    """
+    Generic LLM call for backend investigation modules.
+
+    Args:
+        prompt: User prompt
+        max_tokens: Max tokens (default 800)
+        temperature: 0.3 for factual, 0.1 for JSON
+        system_prompt: Optional system message
+        json_mode: Kept for compatibility (currently ignored)
+
+    Returns:
+        String response from LLM
+    """
+    try:
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        else:
+            messages.append({
+                "role": "system",
+                "content": (
+                    "You are a precise assistant. "
+                    "Return ONLY valid JSON when asked. "
+                    "No markdown, no explanation, no code fences."
+                )
+            })
+        messages.append({"role": "user", "content": prompt})
+
+        response = client.chat.completions.create(
+            model="openai/gpt-oss-20b",
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        content = response.choices[0].message.content
+        return content if content else ""
+    except Exception as e:
+        print(f"[llm] get_llm_response error: {e}")
+        return ""
